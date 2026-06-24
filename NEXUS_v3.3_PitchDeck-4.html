@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>NEXUS v3.3 — Pitch Deck</title>
+<style>
+/* ═══════════════════════════════════════════
+   NEXUS v3.3 Pitch Deck
+   Tested: iOS 13-18, Android 8+, Desktop
+   NO: @import fonts, backdrop-filter, min(),
+       inset:, position:fixed flex chains,
+       height:100% chains, forEach on NodeList
+═══════════════════════════════════════════ */
+
+:root{
+  --bg:#080E16;--bg2:#0D1824;--surf:#132030;--surf2:#1A2C3E;--border:#1C3248;
+  --teal:#0D9488;--tealB:#14B8A6;--tealL:#5EEAD4;
+  --emerald:#10B981;--amberL:#FCD34D;--orange:#F97316;
+  --white:#F0F6FC;--white2:#C9D9E8;--muted:#536D87;--red:#F87171;
+  --r:10px;
+}
+
+/* ── RESET ── */
+*{-webkit-box-sizing:border-box;box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  /* No min-height:100vh — unreliable on iOS Safari with toolbar */
+  background:#080E16;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  color:#F0F6FC;
+  overflow:hidden; /* prevent body scroll — all scrolling inside .slide */
+  -webkit-text-size-adjust:100%; /* prevent iOS font size adjustment */
+}
+
+/* ── DECK: fixed to screen, height set by JS in px ── */
+#deck{
+  position:fixed;
+  top:0;left:0;right:0;
+  /* bottom set by JS — not 'bottom:0' because that breaks on iOS with toolbar */
+  background:#080E16;
+  display:-webkit-box;display:-webkit-flex;display:flex;
+  -webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;
+}
+
+/* ── NAV ── */
+#topNav{
+  height:52px;
+  -webkit-flex-shrink:0;flex-shrink:0;
+  background:rgba(8,14,22,.99);
+  border-bottom:1px solid #1C3248;
+  display:-webkit-box;display:-webkit-flex;display:flex;
+  -webkit-box-align:center;-webkit-align-items:center;align-items:center;
+  -webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;
+  padding:0 14px;gap:8px;
+  z-index:300;
+  /* NO backdrop-filter */
+}
+.nav-logo{font-size:15px;font-weight:900;color:#14B8A6;letter-spacing:-.02em;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-align:center;-webkit-align-items:center;align-items:center;gap:6px;-webkit-flex-shrink:0;flex-shrink:0;}
+.nav-badge{font-size:8px;font-weight:700;background:#0D9488;color:#fff;padding:2px 6px;border-radius:3px;}
+.nav-center{display:-webkit-box;display:-webkit-flex;display:flex;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 0;-webkit-box-flex:1;-webkit-flex:1;flex:1;-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;}
+.nav-center::-webkit-scrollbar{display:none;}
+.nav-pill{height:6px;width:22px;border-radius:3px;cursor:pointer;background:#1C3248;border:none;-webkit-transition:all .2s;transition:all .2s;-webkit-flex-shrink:0;flex-shrink:0;}
+.nav-pill.active{background:#14B8A6;width:30px;}
+.nav-right{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-align:center;-webkit-align-items:center;align-items:center;gap:5px;-webkit-flex-shrink:0;flex-shrink:0;}
+.nav-counter{font-size:11px;color:#536D87;white-space:nowrap;}
+
+/* ── LANG SWITCHER ── */
+.lang-switcher{display:-webkit-box;display:-webkit-flex;display:flex;gap:3px;-webkit-flex-shrink:0;flex-shrink:0;}
+.lang-btn{background:#132030;border:1.5px solid #1C3248;color:#536D87;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;-webkit-transition:all .18s;transition:all .18s;}
+.lang-btn.active{background:#0D9488;border-color:#14B8A6;color:#fff;}
+
+.nav-btn{background:#132030;border:1.5px solid #1C3248;color:#C9D9E8;border-radius:7px;padding:5px 9px;font-size:16px;font-weight:600;cursor:pointer;line-height:1;-webkit-transition:all .18s;transition:all .18s;}
+.nav-btn:disabled{opacity:.3;}
+.menu-btn{background:#132030;border:1.5px solid #1C3248;color:#C9D9E8;border-radius:7px;padding:5px 9px;font-size:17px;cursor:pointer;line-height:1;-webkit-flex-shrink:0;flex-shrink:0;}
+
+/* ── PROGRESS ── */
+#progressBar{height:2px;background:#1C3248;-webkit-flex-shrink:0;flex-shrink:0;}
+#progressFill{height:100%;background:-webkit-linear-gradient(left,#0D9488,#14B8A6);background:linear-gradient(90deg,#0D9488,#14B8A6);-webkit-transition:width .35s ease;transition:width .35s ease;width:8.33%;}
+
+/* ── SLIDES VIEWPORT: height set by JS ── */
+#slidesVP{
+  position:relative;
+  overflow:hidden;
+  -webkit-flex:1;flex:1;
+  /* explicit px height set by JS — do not use flex:1 alone on iOS */
+}
+
+/* ── LANG SET ── */
+.lang-set{
+  position:absolute;
+  top:0;left:0;right:0;
+  /* bottom / height set by JS */
+  overflow:hidden;
+}
+
+/* ── SLIDES TRACK ── */
+.slides-track{
+  display:-webkit-box;display:-webkit-flex;display:flex;
+  width:100%;
+  /* height set by JS */
+  -webkit-transition:-webkit-transform .4s cubic-bezier(.4,0,.2,1);
+  transition:transform .4s cubic-bezier(.4,0,.2,1);
+  will-change:transform; /* GPU composite hint */
+}
+
+/* ── SINGLE SLIDE ── */
+.slide{
+  -webkit-box-flex:0;-webkit-flex:0 0 100%;flex:0 0 100%;
+  width:100%;
+  /* height set by JS */
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch; /* iOS momentum scroll */
+  display:-webkit-box;display:-webkit-flex;display:flex;
+  -webkit-box-align:start;-webkit-align-items:flex-start;align-items:flex-start;
+  -webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;
+  padding:24px 18px 60px;
+}
+.slide-inner{width:100%;max-width:1100px;}
+
+/* ── MENU DRAWER ── */
+#menuDrawer{
+  position:fixed;top:0;right:0;bottom:0;
+  width:260px;max-width:85vw; /* no min() */
+  background:rgba(8,14,22,.99);
+  border-left:1px solid #1C3248;
+  z-index:400;
+  -webkit-transform:translateX(100%);transform:translateX(100%);
+  -webkit-transition:-webkit-transform .3s;transition:transform .3s;
+  display:-webkit-box;display:-webkit-flex;display:flex;
+  -webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;
+  overflow:hidden;
+  /* NO backdrop-filter */
+}
+#menuDrawer.open{-webkit-transform:translateX(0);transform:translateX(0);}
+.menu-drawer-head{padding:14px 16px;border-bottom:1px solid #1C3248;display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-pack:justify;-webkit-justify-content:space-between;justify-content:space-between;-webkit-box-align:center;-webkit-align-items:center;align-items:center;-webkit-flex-shrink:0;flex-shrink:0;}
+.menu-drawer-title{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#536D87;}
+.menu-close{background:none;border:none;color:#536D87;font-size:20px;cursor:pointer;padding:0;line-height:1;}
+.menu-drawer-list{overflow-y:auto;-webkit-overflow-scrolling:touch;-webkit-box-flex:1;-webkit-flex:1;flex:1;padding:6px 0;}
+.sm-item{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-align:center;-webkit-align-items:center;align-items:center;gap:10px;width:100%;padding:10px 16px;background:none;border:none;font-size:13px;font-weight:500;color:#C9D9E8;cursor:pointer;text-align:left;}
+.sm-item.active{background:#132030;color:#14B8A6;font-weight:700;}
+.sm-num{font-size:9px;font-weight:700;background:#0D1824;border:1px solid #1C3248;color:#536D87;border-radius:3px;padding:2px 5px;-webkit-flex-shrink:0;flex-shrink:0;min-width:24px;text-align:center;}
+.sm-item.active .sm-num{background:#0D9488;color:#fff;border-color:#14B8A6;}
+
+#menuOverlay{position:fixed;top:0;left:0;right:0;bottom:0;z-index:399;background:rgba(0,0,0,.5);display:none;}
+#menuOverlay.open{display:block;}
+
+/* ── SWIPE HINT ── */
+#swipeHint{position:fixed;bottom:20px;left:50%;-webkit-transform:translateX(-50%);transform:translateX(-50%);background:rgba(19,32,48,.96);border:1px solid #1C3248;border-radius:20px;padding:6px 14px;font-size:11px;color:#536D87;display:-webkit-box;display:-webkit-flex;display:flex;gap:8px;-webkit-box-align:center;-webkit-align-items:center;align-items:center;opacity:1;-webkit-transition:opacity .5s;transition:opacity .5s;pointer-events:none;z-index:50;white-space:nowrap;}
+#swipeHint.gone{opacity:0;}
+
+/* ── ORB ── */
+.orb{position:absolute;border-radius:50%;pointer-events:none;filter:blur(50px);opacity:.45;}
+
+/* ── TYPOGRAPHY ── */
+.kicker{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--orange);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.kicker::before{content:'';width:20px;height:2px;background:var(--orange);border-radius:1px;flex-shrink:0;}
+.headline{font-size:clamp(24px,6vw,54px);font-weight:900;line-height:1.05;letter-spacing:-.03em;color:var(--white);}
+.subline{font-size:clamp(13px,2.5vw,15px);color:var(--white2);line-height:1.65;margin-top:14px;}
+.label-sm{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.05em;border:1.5px solid;}
+.badge.teal{background:rgba(13,148,136,.15);border-color:rgba(20,184,166,.4);color:var(--tealL);}
+.badge.orange{background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.4);color:var(--orange);}
+.badge.green{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.35);color:var(--emerald);}
+
+/* ── CARDS ── */
+.card{background:var(--surf);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;}
+.card-dark{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.g2-stat{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ── STAT CARD ── */
+.stat-card{background:var(--surf);border:1.5px solid var(--border);border-radius:var(--r);padding:18px 10px;text-align:center;}
+.stat-num{font-size:clamp(34px,8vw,58px);font-weight:900;letter-spacing:-.04em;line-height:1;}
+.stat-label{font-size:12px;font-weight:700;color:var(--white);margin-top:6px;}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:3px;}
+
+/* ── AGENT CARD ── */
+.agent-card{background:var(--surf);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;}
+.agent-icon{font-size:24px;margin-bottom:8px;}
+.agent-name{font-size:13px;font-weight:800;margin-bottom:2px;}
+.agent-sub{font-size:10px;color:var(--muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
+.agent-role{font-size:11px;color:var(--white2);line-height:1.5;}
+
+/* ── PIPELINE ── */
+.pipe-wrap{display:flex;flex-direction:column;gap:8px;}
+.pipe-step{background:var(--surf);border:1.5px solid var(--border);border-radius:8px;padding:11px 13px;display:flex;align-items:center;gap:12px;}
+.pipe-num{font-size:9px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--muted);margin-bottom:2px;}
+.pipe-icon{font-size:20px;}
+.pipe-label{font-size:12px;font-weight:700;margin-bottom:2px;}
+.pipe-sub{font-size:10px;color:var(--muted);line-height:1.4;}
+.pipe-connector{text-align:center;color:var(--tealB);font-size:13px;}
+
+/* ── OUTPUT BAR ── */
+.output-bar{background:rgba(13,148,136,.1);border:1.5px solid rgba(20,184,166,.25);border-radius:8px;padding:11px 14px;margin-top:12px;}
+.output-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+.output-pill{font-size:11px;font-weight:600;color:var(--tealL);}
+
+/* ── IO COLS ── */
+.io-col{background:var(--surf2);border:1.5px solid var(--border);border-radius:var(--r);padding:14px;}
+.io-head{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:11px;}
+.io-row{display:flex;align-items:flex-start;gap:9px;margin-bottom:9px;font-size:12px;color:var(--white2);line-height:1.5;}
+.io-row:last-child{margin-bottom:0;}
+.io-icon{font-size:16px;flex-shrink:0;}
+
+/* ── LANG GRID ── */
+.lang-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:14px;}
+.lang-pill{background:var(--surf);border:1.5px solid var(--border);border-radius:7px;padding:7px 8px;font-size:11px;color:var(--white2);text-align:center;}
+
+/* ── PDF FLOW ── */
+.pdf-flow{display:flex;flex-direction:column;gap:0;}
+.pdf-step{display:flex;align-items:flex-start;gap:14px;position:relative;padding-bottom:14px;}
+.pdf-step:not(:last-child)::before{content:'';position:absolute;left:18px;top:38px;bottom:0;width:2px;background:linear-gradient(180deg,rgba(249,115,22,.5),rgba(249,115,22,.05));}
+.pdf-dot{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--orange),#FB923C);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.pdf-text strong{display:block;font-size:12px;color:var(--white);margin-bottom:2px;}
+.pdf-text span{font-size:11px;color:var(--white2);line-height:1.5;}
+
+/* ── PDF AGENTS ── */
+.pdf-agents{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.pdf-agent{background:var(--surf);border:1.5px solid var(--border);border-radius:8px;padding:11px 7px;text-align:center;}
+.pdf-agent-icon{font-size:18px;margin-bottom:5px;}
+.pdf-agent-name{font-size:11px;font-weight:700;color:var(--orange);margin-bottom:2px;}
+.pdf-agent-desc{font-size:9px;color:var(--white2);line-height:1.4;}
+
+/* ── BEFORE / AFTER ── */
+.ba-col{border-radius:var(--r);padding:14px;}
+.ba-col.before{background:rgba(248,113,113,.05);border:1.5px solid rgba(248,113,113,.2);}
+.ba-col.after{background:rgba(13,148,136,.06);border:1.5px solid rgba(20,184,166,.22);}
+.ba-head{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-bottom:11px;}
+.ba-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:9px;font-size:12px;line-height:1.45;color:var(--white2);}
+.ba-item:last-child{margin-bottom:0;}
+.ba-x{color:var(--red);font-weight:800;flex-shrink:0;}
+.ba-ck{color:var(--tealL);font-weight:800;flex-shrink:0;}
+
+/* ── USE CASE ── */
+.uc-card{background:var(--surf);border:1.5px solid var(--border);border-radius:var(--r);padding:13px;}
+.uc-icon{font-size:22px;margin-bottom:6px;}
+.uc-who{font-size:12px;font-weight:800;color:var(--tealB);margin-bottom:4px;}
+.uc-what{font-size:11px;color:var(--white2);line-height:1.45;}
+
+/* ── TECH ITEMS ── */
+.tech-item{display:flex;align-items:flex-start;gap:10px;padding:11px;background:var(--surf);border:1.5px solid var(--border);border-radius:9px;}
+.tech-check{color:var(--emerald);font-size:13px;flex-shrink:0;margin-top:2px;}
+.tech-head{font-size:12px;font-weight:700;color:var(--white);margin-bottom:2px;}
+.tech-body{font-size:11px;color:var(--white2);line-height:1.45;}
+
+/* ── CTA ── */
+.cta-card{background:var(--surf);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;}
+.cta-icon{font-size:30px;margin-bottom:9px;}
+.cta-head{font-size:13px;font-weight:800;margin-bottom:4px;}
+.cta-sub{font-size:11px;color:var(--white2);line-height:1.45;}
+.contact-bar{background:rgba(13,148,136,.1);border:1.5px solid rgba(20,184,166,.25);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;align-items:center;}
+.contact-bar a{color:var(--tealL);text-decoration:none;font-size:13px;font-weight:600;}
+.contact-bar a:hover{color:var(--tealB);text-decoration:underline;}
+
+/* ── COVER ── */
+.cover-word{font-size:clamp(60px,18vw,130px);font-weight:900;letter-spacing:-.04em;line-height:.9;color:var(--white);margin-bottom:14px;}
+.cover-badges{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.cover-tagline{font-size:clamp(14px,3.5vw,20px);color:var(--tealB);font-weight:500;margin-bottom:8px;}
+.cover-sub{font-size:13px;color:var(--white2);line-height:1.6;}
+.cover-agents{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:18px;}
+.ca-card{background:var(--surf);border:1.5px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;}
+.ca-icon{font-size:18px;margin-bottom:3px;}
+.ca-label{font-size:9px;font-weight:700;letter-spacing:.04em;}
+
+/* ── SPACERS ── */
+.mt8{margin-top:8px;}.mt12{margin-top:12px;}.mt16{margin-top:16px;}.mt20{margin-top:20px;}
+
+/* ── SWIPE HINT ── */
+.swipe-hint{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(19,32,48,.95);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center;opacity:1;transition:opacity .5s;pointer-events:none;z-index:50;white-space:nowrap;}
+.swipe-hint.gone{opacity:0;}
+.kb-key{background:var(--surf);border:1px solid var(--border);border-radius:3px;padding:1px 6px;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--white2);}
+
+/* ════════════════════════════
+   BREAKPOINTS
+════════════════════════════ */
+@media(max-width:639px){
+  .g2{grid-template-columns:1fr;}
+  .g3{grid-template-columns:1fr 1fr;}
+  .pdf-agents{grid-template-columns:1fr 1fr;}
+  .lang-grid{grid-template-columns:1fr 1fr;}
+  .cover-agents{grid-template-columns:repeat(2,1fr);}
+  .nav-center{display:none;}
+  .hide-mob{display:none;}
+}
+@media(min-width:640px){
+  .slide{padding:32px 28px 52px;}
+  .g2{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .lang-grid{grid-template-columns:repeat(3,1fr);}
+  .cover-agents{grid-template-columns:repeat(3,1fr);}
+  .pipe-wrap{flex-direction:row;flex-wrap:wrap;}
+  .pipe-step{flex:1 1 calc(33% - 8px);flex-direction:column;text-align:center;align-items:center;}
+  .pipe-connector{display:none;}
+  .contact-bar{flex-direction:row;flex-wrap:wrap;justify-content:center;}
+}
+@media(min-width:900px){
+  .slide{padding:40px 52px 60px;align-items:center;}
+  .slide-inner{display:flex;flex-direction:column;justify-content:center;min-height:100%;}
+  .lang-grid{grid-template-columns:repeat(4,1fr);}
+  .cover-2col{display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:center;}
+  .pdf-2col{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;}
+  .io-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .ba-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  .cta-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;}
+  .lang-lang-grid{grid-template-columns:repeat(4,1fr);}
+}
+@media(prefers-reduced-motion:reduce){.slides-track,.menu-drawer{transition:none;}}
+
+
+/* ── LANG SET OVERLAY ── */
+.lang-set{position:absolute;inset:0;}
+.slides-vp{position:relative;}
+
+
+/* ═══ BREAKPOINTS ═══ */
+@media(max-width:639px){
+  .g2{grid-template-columns:1fr;}
+  .g3{grid-template-columns:1fr 1fr;}
+  .pdf-agents{grid-template-columns:1fr 1fr;}
+  .lang-grid{grid-template-columns:1fr 1fr;}
+  .cover-agents{grid-template-columns:repeat(2,1fr);}
+  .nav-center{display:none;}
+  .hide-mob{display:none;}
+}
+@media(min-width:640px){
+  .slide{padding:32px 28px 52px;}
+  .g2{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .lang-grid{grid-template-columns:repeat(3,1fr);}
+  .cover-agents{grid-template-columns:repeat(3,1fr);}
+  .pipe-wrap{-webkit-flex-direction:row;flex-direction:row;-webkit-flex-wrap:wrap;flex-wrap:wrap;}
+  .pipe-step{-webkit-box-flex:1;-webkit-flex:1 1 calc(33% - 8px);flex:1 1 calc(33% - 8px);-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;text-align:center;-webkit-box-align:center;-webkit-align-items:center;align-items:center;}
+  .pipe-connector{display:none;}
+  .contact-bar{-webkit-flex-direction:row;flex-direction:row;-webkit-flex-wrap:wrap;flex-wrap:wrap;-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;}
+}
+@media(min-width:900px){
+  .slide{padding:40px 52px 60px;-webkit-box-align:center;-webkit-align-items:center;align-items:center;}
+  .slide-inner{display:-webkit-box;display:-webkit-flex;display:flex;-webkit-box-orient:vertical;-webkit-flex-direction:column;flex-direction:column;-webkit-box-pack:center;-webkit-justify-content:center;justify-content:center;min-height:100%;}
+  .lang-grid{grid-template-columns:repeat(4,1fr);}
+  .cover-2col{display:grid;grid-template-columns:1fr 380px;gap:40px;-webkit-box-align:center;align-items:center;}
+  .pdf-2col{display:grid;grid-template-columns:1fr 1fr;gap:32px;-webkit-box-align:start;align-items:start;}
+  .io-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .ba-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+  .cta-3col{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;}
+}
+@media(prefers-reduced-motion:reduce){
+  .slides-track,#menuDrawer{-webkit-transition:none;transition:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="deck">
+  <div id="progressBar"><div id="progressFill"></div></div>
+
+  <div id="topNav">
+    <div class="nav-logo">NEXUS <span class="nav-badge">v3.3</span></div>
+    <div class="nav-center" id="navPills">
+<div class="pills-lang" id="pills-en" style="display:flex;gap:4px;">
+  <button class="nav-pill active" data-lang="en" data-idx="0" onclick="goTo(0)" title="Cover — NEXUS v3.3"></button>
+  <button class="nav-pill" data-lang="en" data-idx="1" onclick="goTo(1)" title="The Problem"></button>
+  <button class="nav-pill" data-lang="en" data-idx="2" onclick="goTo(2)" title="What is NEXUS?"></button>
+  <button class="nav-pill" data-lang="en" data-idx="3" onclick="goTo(3)" title="Six AI Agents"></button>
+  <button class="nav-pill" data-lang="en" data-idx="4" onclick="goTo(4)" title="PDF Intelligence"></button>
+  <button class="nav-pill" data-lang="en" data-idx="5" onclick="goTo(5)" title="Pipeline Flow"></button>
+  <button class="nav-pill" data-lang="en" data-idx="6" onclick="goTo(6)" title="Inputs & Outputs"></button>
+  <button class="nav-pill" data-lang="en" data-idx="7" onclick="goTo(7)" title="11 Languages"></button>
+  <button class="nav-pill" data-lang="en" data-idx="8" onclick="goTo(8)" title="Who Is This For?"></button>
+  <button class="nav-pill" data-lang="en" data-idx="9" onclick="goTo(9)" title="Security & Tech"></button>
+  <button class="nav-pill" data-lang="en" data-idx="10" onclick="goTo(10)" title="Before vs After"></button>
+  <button class="nav-pill" data-lang="en" data-idx="11" onclick="goTo(11)" title="Start Today"></button>
+</div>
+<div class="pills-lang" id="pills-nl" style="display:none;gap:4px;">
+  <button class="nav-pill active" data-lang="nl" data-idx="0" onclick="goTo(0)" title="Cover — NEXUS v3.3"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="1" onclick="goTo(1)" title="Het probleem"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="2" onclick="goTo(2)" title="Wat is NEXUS?"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="3" onclick="goTo(3)" title="Zes AI-Agenten"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="4" onclick="goTo(4)" title="PDF-intelligentie"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="5" onclick="goTo(5)" title="Pipeline Flow"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="6" onclick="goTo(6)" title="Input & Output"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="7" onclick="goTo(7)" title="11 Talen"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="8" onclick="goTo(8)" title="Voor wie is dit?"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="9" onclick="goTo(9)" title="Beveiliging & Tech"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="10" onclick="goTo(10)" title="Voor vs Na"></button>
+  <button class="nav-pill" data-lang="nl" data-idx="11" onclick="goTo(11)" title="Begin vandaag"></button>
+</div>
+<div class="pills-lang" id="pills-es" style="display:none;gap:4px;">
+  <button class="nav-pill active" data-lang="es" data-idx="0" onclick="goTo(0)" title="Cover — NEXUS v3.3"></button>
+  <button class="nav-pill" data-lang="es" data-idx="1" onclick="goTo(1)" title="El Problema"></button>
+  <button class="nav-pill" data-lang="es" data-idx="2" onclick="goTo(2)" title="¿Qué es NEXUS?"></button>
+  <button class="nav-pill" data-lang="es" data-idx="3" onclick="goTo(3)" title="Seis Agentes IA"></button>
+  <button class="nav-pill" data-lang="es" data-idx="4" onclick="goTo(4)" title="Inteligencia PDF"></button>
+  <button class="nav-pill" data-lang="es" data-idx="5" onclick="goTo(5)" title="Flujo del Pipeline"></button>
+  <button class="nav-pill" data-lang="es" data-idx="6" onclick="goTo(6)" title="Entradas y Salidas"></button>
+  <button class="nav-pill" data-lang="es" data-idx="7" onclick="goTo(7)" title="11 Idiomas"></button>
+  <button class="nav-pill" data-lang="es" data-idx="8" onclick="goTo(8)" title="¿Para quién es?"></button>
+  <button class="nav-pill" data-lang="es" data-idx="9" onclick="goTo(9)" title="Seguridad & Tech"></button>
+  <button class="nav-pill" data-lang="es" data-idx="10" onclick="goTo(10)" title="Antes vs Después"></button>
+  <button class="nav-pill" data-lang="es" data-idx="11" onclick="goTo(11)" title="Empieza Hoy"></button>
+</div>
+    </div>
+    <div class="nav-right">
+      <div class="lang-switcher">
+        <button class="lang-btn active" id="lbEN" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="lbNL" onclick="setLang('nl')">NL</button>
+        <button class="lang-btn" id="lbES" onclick="setLang('es')">ES</button>
+      </div>
+      <span class="nav-counter" id="navCount">1 / 12</span>
+      <button class="nav-btn" id="prevBtn" onclick="go(-1)">&#8249;</button>
+      <button class="nav-btn" id="nextBtn" onclick="go(1)">&#8250;</button>
+      <button class="menu-btn" id="menuBtn" onclick="toggleMenu()">&#9776;</button>
+    </div>
+  </div>
+
+  <div id="slidesVP">
+<div class="lang-set" data-lang="en" id="set-en" style="display:block">
+  <div class="slides-track" id="track-en">
+    <div class="slide" data-idx="0">
+      <div class="slide-inner">/* 1 — COVER */
+`<div class="orb" style="width:300px;height:300px;background:rgba(13,148,136,.15);top:10%;left:-60px;"></div>
+<div class="cover-2col">
+  <div>
+    <div class="cover-word">NEXUS</div>
+    <div class="cover-badges">
+      <span class="badge teal">v3.3</span>
+      <span class="badge orange">+ PDF NEW</span>
+      <span class="badge green">6 AI Agents</span>
+    </div>
+    <div class="cover-tagline">Multi-Agent AI Creative Platform</div>
+    <div class="cover-sub">From brief to finished video campaign in minutes.<br>No agency. No waiting. No compromise.</div>
+    <div class="mt16" style="font-size:11px;color:var(--muted);"><a href="https://codeniacs.nl" target="_blank" style="color:var(--tealL);text-decoration:none;">🌐 codeniacs.nl</a></div>
+  </div>
+  <div class="cover-agents mt20">
+    <div class="ca-card" style="border-color:rgba(20,184,166,.3);"><div class="ca-icon">🧠</div><div class="ca-label" style="color:var(--tealB);">Director</div></div>
+    <div class="ca-card" style="border-color:rgba(20,184,166,.25);"><div class="ca-icon">🎙️</div><div class="ca-label" style="color:var(--tealL);">Voice</div></div>
+    <div class="ca-card" style="border-color:rgba(249,115,22,.3);"><div class="ca-icon">🎬</div><div class="ca-label" style="color:var(--orange);">Video</div></div>
+    <div class="ca-card" style="border-color:rgba(16,185,129,.3);"><div class="ca-icon">🖼️</div><div class="ca-label" style="color:var(--emerald);">Image</div></div>
+    <div class="ca-card" style="border-color:rgba(245,158,11,.3);"><div class="ca-icon">🎵</div><div class="ca-label" style="color:var(--amberL);">Music</div></div>
+    <div class="ca-card" style="border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.07);"><div class="ca-icon">📄</div><div class="ca-label" style="color:var(--orange);">PDF</div></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="1">
+      <div class="slide-inner"><div class="kicker">The problem</div>
+<div class="headline">The old way is<br><span style="color:var(--red);">costing you.</span></div>
+<div class="subline">Every creative project means juggling five tools, three freelancers, and two weeks of revision loops.</div>
+<div class="g2 mt20">
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">⏳</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Days, not minutes</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Brief to finished video ad used to take 3–10 business days across agencies, editors and voiceover artists.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">💸</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Agency fees stack up</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Copywriter. Voiceover. Video editor. Motion designer. Music licensing. €2,000–15,000 before launch.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">🔄</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Endless revision loops</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">One change cascades through every vendor. The brand guide lives in a PDF nobody reads. Assets get lost.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">🌐</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Language barriers</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Multilingual campaigns mean hiring per market. A Dutch-language video ad costs double an English one.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="2">
+      <div class="slide-inner"><div class="kicker">The solution</div>
+<div class="headline">NEXUS is your <span style="color:var(--tealB);">creative agency</span> in one tab.</div>
+<div class="subline">Upload a brief. Upload your images or PDFs. Hit run. NEXUS orchestrates six world-class AI services simultaneously — producing professional voiceovers, cinematic videos, brand-accurate copy and music in minutes.</div>
+<div class="g2-stat mt20">
+  <div class="stat-card"><div class="stat-num" style="color:var(--tealB);">6</div><div class="stat-label">AI Agents</div><div class="stat-sub">working in parallel</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--amberL);">&lt;5</div><div class="stat-label">Minutes</div><div class="stat-sub">brief to finished video</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--emerald);">11</div><div class="stat-label">Languages</div><div class="stat-sub">output in any language</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--orange);">1</div><div class="stat-label">Browser Tab</div><div class="stat-sub">no install, no server</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="3">
+      <div class="slide-inner"><div class="kicker">How it works</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Six AI agents. <span style="color:var(--tealB);">One pipeline.</span></div>
+<div style="font-size:12px;color:var(--tealB);margin:8px 0 14px;">Each agent is a world-class specialist. NEXUS Director orchestrates them all.</div>
+<div class="g3">
+  <div class="agent-card"><div class="agent-icon">🧠</div><div class="agent-name" style="color:var(--tealB);">Director</div><div class="agent-sub">Claude AI</div><div class="agent-role">Reads your brief and every uploaded asset. Builds the full production plan.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎙️</div><div class="agent-name" style="color:var(--tealL);">Voice Synthesis</div><div class="agent-sub">ElevenLabs</div><div class="agent-role">Generates studio-quality voiceovers in 29 languages using Multilingual v2.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎬</div><div class="agent-name" style="color:var(--orange);">Video Generation</div><div class="agent-sub">Runway Gen-3</div><div class="agent-role">Animates your photo or PDF page into a cinematic clip with slow-zoom and atmospheric motion.</div></div>
+  <div class="agent-card"><div class="agent-icon">🖼️</div><div class="agent-name" style="color:var(--emerald);">Image AI</div><div class="agent-sub">DALL-E 3 + Stability</div><div class="agent-role">Generates hero images or cinematically enhances your photo at 0.35 strength.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎵</div><div class="agent-name" style="color:var(--amberL);">Music</div><div class="agent-sub">Suno AI</div><div class="agent-role">Tailored music prompt — genre, BPM, instruments — ready to generate at suno.ai instantly.</div></div>
+  <div class="agent-card" style="border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06);"><div class="agent-icon">📄</div><div class="agent-name" style="color:var(--orange);">PDF Intelligence</div><div class="agent-sub" style="color:rgba(249,115,22,.7);">NEW in v3.3</div><div class="agent-role">Every agent sees your uploaded PDF — text and visuals. Feed a catalogue, brand guide or pitch deck to all agents.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="4">
+      <div class="slide-inner"><div class="orb" style="width:250px;height:250px;background:rgba(249,115,22,.12);top:0;left:-60px;"></div>
+<div class="kicker" style="color:var(--orange);">New in v3.3</div>
+<div class="headline" style="font-size:clamp(20px,5.5vw,42px);">PDF Intelligence.<br><span style="color:var(--orange);">Feed your brand</span><br>to every agent.</div>
+<div class="subline mt12">Upload any PDF — product catalogue, brand guide, pitch deck, press release — and every AI agent receives both the TEXT and the VISUALS as context.</div>
+<div class="pdf-2col mt20">
+  <div>
+    <div class="label-sm" style="margin-bottom:11px;">How it works</div>
+    <div class="pdf-flow">
+      <div class="pdf-step"><div class="pdf-dot">📄</div><div class="pdf-text"><strong>Upload</strong><span>Drop any PDF into the orange zone. Multiple PDFs supported.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🖼️</div><div class="pdf-text"><strong>Page extraction</strong><span>Every page rendered as high-res JPEG. Text extracted per page.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🎯</div><div class="pdf-text"><strong>Assign pages to slots</strong><span>Hover a thumbnail → 🎬 sends to Runway, ✨ sends to Img2Img.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🚀</div><div class="pdf-text"><strong>Run Pipeline</strong><span>All agents get up to 8 pages as visual context plus full text. Automatic.</span></div></div>
+    </div>
+  </div>
+  <div>
+    <div class="label-sm" style="margin-bottom:11px;">Which agents use the PDF</div>
+    <div class="pdf-agents">
+      <div class="pdf-agent"><div class="pdf-agent-icon">🧠</div><div class="pdf-agent-name">Director</div><div class="pdf-agent-desc">Brand voice & visual style</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">✍️</div><div class="pdf-agent-name">Copywriter</div><div class="pdf-agent-desc">Product names & key messages</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🌐</div><div class="pdf-agent-name">Translator</div><div class="pdf-agent-desc">Consistent terms in all 11 languages</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🖼️</div><div class="pdf-agent-name">DALL-E 3</div><div class="pdf-agent-desc">Hero image matching PDF style</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🎵</div><div class="pdf-agent-name">Suno AI</div><div class="pdf-agent-desc">Music mood from PDF tone</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🎬</div><div class="pdf-agent-name">Runway</div><div class="pdf-agent-desc">Animate any PDF page directly</div></div>
+    </div>
+    <div class="mt12" style="padding:10px 12px;background:rgba(249,115,22,.08);border:1.5px solid rgba(249,115,22,.22);border-radius:8px;font-size:11px;color:var(--white2);line-height:1.55;">📌 <strong style="color:var(--orange);">100% client-side PDF processing.</strong> Your documents never leave your browser.</div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="5">
+      <div class="slide-inner"><div class="kicker">The workflow</div>
+<div class="headline" style="font-size:clamp(20px,5vw,36px);">From brief to finished campaign.</div>
+<div style="font-size:12px;color:var(--tealB);margin:8px 0 14px;">7 automated steps. One click. Under 5 minutes.</div>
+<div class="pipe-wrap">
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--orange);">01</div><div class="pipe-icon">📄</div></div><div><div class="pipe-label" style="color:var(--orange);">Upload</div><div class="pipe-sub">Images, PDFs or just your brief</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealB);">02</div><div class="pipe-icon">🧠</div></div><div><div class="pipe-label" style="color:var(--tealB);">Director</div><div class="pipe-sub">Claude builds production plan</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealL);">03</div><div class="pipe-icon">✍️</div></div><div><div class="pipe-label" style="color:var(--tealL);">Copywrite</div><div class="pipe-sub">Scripts, ad copy, captions</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealL);">04</div><div class="pipe-icon">🎙️</div></div><div><div class="pipe-label" style="color:var(--tealL);">Voice</div><div class="pipe-sub">ElevenLabs voiceover</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--amberL);">05</div><div class="pipe-icon">🎵</div></div><div><div class="pipe-label" style="color:var(--amberL);">Music</div><div class="pipe-sub">Suno AI prompt ready</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--emerald);">06</div><div class="pipe-icon">🖼️</div></div><div><div class="pipe-label" style="color:var(--emerald);">Image</div><div class="pipe-sub">DALL-E 3 or Stability</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--orange);">07</div><div class="pipe-icon">🎬</div></div><div><div class="pipe-label" style="color:var(--orange);">Video</div><div class="pipe-sub">Runway Gen-3 animation</div></div></div>
+</div>
+<div class="output-bar"><div class="output-pills"><span class="output-pill">✅ Voiceover MP3</span><span class="output-pill">✅ Video MP4</span><span class="output-pill">✅ Hero Image</span><span class="output-pill">✅ Ad Copy ×2</span><span class="output-pill">✅ Social Caption</span><span class="output-pill">✅ Music Prompt</span><span class="output-pill">✅ Full Script</span></div></div></div>
+    </div>
+    <div class="slide" data-idx="6">
+      <div class="slide-inner"><div class="kicker">What you need</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">What you bring.<br><span style="color:var(--tealB);">What NEXUS creates.</span></div>
+<div class="io-2col mt20">
+  <div class="io-col">
+    <div class="io-head" style="color:var(--muted);">You bring</div>
+    <div class="io-row"><span class="io-icon">📄</span><span>PDF documents — catalogues, brand guides, pitch decks, press releases</span></div>
+    <div class="io-row"><span class="io-icon">🖼️</span><span>JPG / PNG / WebP photos — products, portraits, locations, logos</span></div>
+    <div class="io-row"><span class="io-icon">🎬</span><span>MP4 video — existing footage as visual reference</span></div>
+    <div class="io-row"><span class="io-icon">⚡</span><span>Your creative brief — written naturally, any language, one sentence is enough</span></div>
+  </div>
+  <div class="io-col" style="border-color:rgba(20,184,166,.25);background:rgba(13,148,136,.05);">
+    <div class="io-head" style="color:var(--tealB);">NEXUS delivers</div>
+    <div class="io-row"><span class="io-icon">🎙️</span><span>Professional voiceover in 29 languages — ElevenLabs Multilingual v2</span></div>
+    <div class="io-row"><span class="io-icon">🎬</span><span>Cinematic 10-second video — Runway Gen-3 animation from your photo</span></div>
+    <div class="io-row"><span class="io-icon">🖼️</span><span>Hero image — DALL-E 3 generated or Stability AI enhanced</span></div>
+    <div class="io-row"><span class="io-icon">✍️</span><span>Ad copy (2 versions) + social caption + voiceover script + shot list</span></div>
+    <div class="io-row"><span class="io-icon">🎵</span><span>Suno music prompt — genre, BPM, mood, ready to paste</span></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="7">
+      <div class="slide-inner"><div class="kicker" style="color:var(--emerald);">Global reach</div>
+<div class="headline">One brief.<br><span style="color:var(--emerald);">Eleven markets.</span></div>
+<div class="subline mt12">NEXUS detects your brief language automatically and produces every output in any of 11 languages. One run. No extra cost.</div>
+<div class="lang-grid">
+  <div class="lang-pill">🇬🇧 English</div><div class="lang-pill">🇳🇱 Nederlands</div><div class="lang-pill">🇪🇸 Español</div>
+  <div class="lang-pill">🇵🇹 Português</div><div class="lang-pill">🇫🇷 Français</div><div class="lang-pill">🇩🇪 Deutsch</div>
+  <div class="lang-pill">🇮🇹 Italiano</div><div class="lang-pill">🇯🇵 日本語</div><div class="lang-pill">🇨🇳 中文</div>
+  <div class="lang-pill">🇸🇦 العربية</div><div class="lang-pill">🎯 Papiamento</div>
+</div>
+<div class="mt16" style="padding:12px 14px;background:rgba(16,185,129,.08);border:1.5px solid rgba(16,185,129,.2);border-radius:8px;font-size:12px;color:var(--white2);line-height:1.55;">🌍 <strong style="color:var(--emerald);">Cultural adaptation, not just translation.</strong> Papiamento support makes NEXUS unique for the Caribbean and Dutch Antilles market.</div></div>
+    </div>
+    <div class="slide" data-idx="8">
+      <div class="slide-inner"><div class="kicker">Your audience</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Built for creators<br>who <span style="color:var(--tealB);">move fast.</span></div>
+<div class="g3 mt20">
+  <div class="uc-card"><div class="uc-icon">🎯</div><div class="uc-who">Creative Agencies</div><div class="uc-what">Produce 10× more pitches per week. Show clients AI video concepts on day one.</div></div>
+  <div class="uc-card"><div class="uc-icon">🏨</div><div class="uc-who">Tourism & Hospitality</div><div class="uc-what">Upload your brochure PDF. Get a full multilingual video ad campaign in minutes.</div></div>
+  <div class="uc-card"><div class="uc-icon">🛍️</div><div class="uc-who">E-commerce Brands</div><div class="uc-what">Product catalogue as PDF → hero video, voice ad, music and copy — all brand-consistent.</div></div>
+  <div class="uc-card"><div class="uc-icon">🎓</div><div class="uc-who">Content Creators</div><div class="uc-what">Turn any idea into a complete video production package — script, voice, visuals, music.</div></div>
+  <div class="uc-card"><div class="uc-icon">📢</div><div class="uc-who">Marketing Teams</div><div class="uc-what">Multilingual campaigns without multilingual budgets. One brief, eleven market adaptations.</div></div>
+  <div class="uc-card"><div class="uc-icon">🚀</div><div class="uc-who">Startups & Founders</div><div class="uc-what">Investor pitch deck as PDF input → full brand video in under 5 minutes, ready to share.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="9">
+      <div class="slide-inner"><div class="kicker">Trust & security</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Enterprise-grade.<br><span style="color:var(--tealB);">Zero infrastructure.</span></div>
+<div class="tech-grid mt20">
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Single HTML file</div><div class="tech-body">Open in any browser. No install, no server, no cloud account. Works on Mac, Windows, iPad.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Session-only key storage</div><div class="tech-body">API keys live in browser memory only. Never written to disk. Close the tab — they're gone.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">AVG / GDPR by design</div><div class="tech-body">No data leaves to third parties beyond the API calls you explicitly trigger.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">PDF.js — 100% client-side</div><div class="tech-body">All PDF rendering and text extraction happens in your browser. Documents never leave your device.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Bring your own keys</div><div class="tech-body">You control every AI subscription. NEXUS never holds or proxies your credentials.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Offline-capable</div><div class="tech-body">Full creative workflow without internet — except for the AI API calls you trigger.</div></div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="10">
+      <div class="slide-inner"><div class="kicker">The shift</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">The shift is real.</div>
+<div class="ba-2col mt20">
+  <div class="ba-col before">
+    <div class="ba-head" style="color:var(--red);">✗ Without NEXUS</div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>3–10 days for a video campaign</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>€2,000–15,000 in agency/freelancer fees</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>5 different tools to learn and manage</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Translation = hire per market</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Brand inconsistency between assets</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Revision rounds cost extra time & money</span></div>
+  </div>
+  <div class="ba-col after">
+    <div class="ba-head" style="color:var(--tealL);">✓ With NEXUS v3.3</div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Complete campaign in <strong style="color:var(--tealL);">&lt; 5 minutes</strong></span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>One-time platform cost. No per-project fees</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>One browser tab. No learning curve</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>11 languages built-in. One click</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span><strong style="color:var(--tealL);">PDF brand guide</strong> feeds every agent</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Infinite iterations. Same cost</span></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="11">
+      <div class="slide-inner"><div class="orb" style="width:300px;height:300px;background:rgba(13,148,136,.12);top:10%;left:50%;transform:translateX(-50%);"></div>
+<div style="text-align:center;max-width:700px;margin:0 auto;">
+  <div style="font-size:clamp(48px,14vw,92px);font-weight:900;letter-spacing:-.04em;line-height:.92;color:var(--white);margin-bottom:10px;">START TODAY.</div>
+  <div style="font-size:clamp(13px,3vw,16px);color:var(--tealB);margin-bottom:20px;font-weight:500;">Your competitors are still waiting on their agency.</div>
+  <div class="cta-3col">
+    <div class="cta-card"><div class="cta-icon">📥</div><div class="cta-head" style="color:var(--tealB);">Get NEXUS v3.3</div><div class="cta-sub">Single HTML file. Open in any browser. Mac, Windows, iPad.</div></div>
+    <div class="cta-card"><div class="cta-icon">🔑</div><div class="cta-head" style="color:var(--emerald);">Connect Your APIs</div><div class="cta-sub">ElevenLabs, Runway & DALL-E — all have free tiers to start immediately.</div></div>
+    <div class="cta-card"><div class="cta-icon">🚀</div><div class="cta-head" style="color:var(--orange);">Run Your First Campaign</div><div class="cta-sub">Upload a PDF or photo. Write one sentence. Hit Run. Done in under 5 minutes.</div></div>
+  </div>
+  <div class="contact-bar mt20">
+    <a href="https://codeniacs.nl" target="_blank">🌐 codeniacs.nl</a>
+    <a href="mailto:g.hasham@smart-ondernemen.nl">✉ g.hasham@smart-ondernemen.nl</a>
+  </div>
+  <div class="mt16" style="font-size:10px;color:var(--muted);">NEXUS v3.3 · Multi-Agent Creative Platform · Codeniacs · 2026</div>
+</div></div>
+    </div>
+  </div>
+</div>
+<div class="lang-set" data-lang="nl" id="set-nl" style="display:none">
+  <div class="slides-track" id="track-nl">
+    <div class="slide" data-idx="0">
+      <div class="slide-inner">/* 1 — COVER NL */
+`<div class="orb" style="width:300px;height:300px;background:rgba(13,148,136,.15);top:10%;left:-60px;"></div>
+<div class="cover-2col">
+  <div>
+    <div class="cover-word">NEXUS</div>
+    <div class="cover-badges">
+      <span class="badge teal">v3.3</span>
+      <span class="badge orange">+ PDF NIEUW</span>
+      <span class="badge green">6 AI-Agenten</span>
+    </div>
+    <div class="cover-tagline">Multi-Agent AI Creatief Platform</div>
+    <div class="cover-sub">Van briefing naar afgeronde videocampagne in minuten.<br>Geen bureau. Geen wachttijd. Geen compromis.</div>
+    <div class="mt16" style="font-size:11px;color:var(--muted);"><a href="https://codeniacs.nl" target="_blank" style="color:var(--tealL);text-decoration:none;">🌐 codeniacs.nl</a></div>
+  </div>
+  <div class="cover-agents mt20">
+    <div class="ca-card" style="border-color:rgba(20,184,166,.3);"><div class="ca-icon">🧠</div><div class="ca-label" style="color:var(--tealB);">Director</div></div>
+    <div class="ca-card" style="border-color:rgba(20,184,166,.25);"><div class="ca-icon">🎙️</div><div class="ca-label" style="color:var(--tealL);">Spraak</div></div>
+    <div class="ca-card" style="border-color:rgba(249,115,22,.3);"><div class="ca-icon">🎬</div><div class="ca-label" style="color:var(--orange);">Video</div></div>
+    <div class="ca-card" style="border-color:rgba(16,185,129,.3);"><div class="ca-icon">🖼️</div><div class="ca-label" style="color:var(--emerald);">Beeld</div></div>
+    <div class="ca-card" style="border-color:rgba(245,158,11,.3);"><div class="ca-icon">🎵</div><div class="ca-label" style="color:var(--amberL);">Muziek</div></div>
+    <div class="ca-card" style="border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.07);"><div class="ca-icon">📄</div><div class="ca-label" style="color:var(--orange);">PDF</div></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="1">
+      <div class="slide-inner"><div class="kicker">Het probleem</div>
+<div class="headline">De oude manier<br><span style="color:var(--red);">kost je te veel.</span></div>
+<div class="subline">Elk creatief project betekent vijf tools jongleren, drie freelancers coördineren en twee weken revisies doorstaan.</div>
+<div class="g2 mt20">
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">⏳</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Dagen, geen minuten</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Van briefing tot videoadvertentie duurde vroeger 3–10 werkdagen via bureaus, editors en voice-artiesten.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">💸</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Bureaukosten stapelen zich op</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Copywriter. Voice-over. Video-editor. Motion designer. Muzieklicenties. €2.000–15.000 vóór de lancering.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">🔄</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Eindeloze revisierondes</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Eén wijziging heeft gevolgen voor alle leveranciers. De merkgids staat in een PDF die niemand leest. Assets raken zoek.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">🌐</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Taalbarrières</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Meertalige campagnes betekenen per markt inhuren. Een Nederlandstalige videoadvertentie kost dubbel zoveel.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="2">
+      <div class="slide-inner"><div class="kicker">De oplossing</div>
+<div class="headline">NEXUS is jouw <span style="color:var(--tealB);">creatief bureau</span> in één tab.</div>
+<div class="subline">Upload een briefing. Upload je afbeeldingen of PDF's. Druk op starten. NEXUS orkestreert zes wereldklasse AI-diensten tegelijkertijd — professionele voice-overs, cinematografische video's, merkconforme tekst en muziek in minuten.</div>
+<div class="g2-stat mt20">
+  <div class="stat-card"><div class="stat-num" style="color:var(--tealB);">6</div><div class="stat-label">AI-Agenten</div><div class="stat-sub">werken parallel</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--amberL);">&lt;5</div><div class="stat-label">Minuten</div><div class="stat-sub">van briefing naar video</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--emerald);">11</div><div class="stat-label">Talen</div><div class="stat-sub">uitvoer in elke taal</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--orange);">1</div><div class="stat-label">Browsertab</div><div class="stat-sub">geen installatie, geen server</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="3">
+      <div class="slide-inner"><div class="kicker">Hoe het werkt</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Zes AI-agenten. <span style="color:var(--tealB);">Één pipeline.</span></div>
+<div style="font-size:12px;color:var(--tealB);margin:8px 0 14px;">Elke agent is een wereldklasse specialist. NEXUS Director orkestreert ze allemaal.</div>
+<div class="g3">
+  <div class="agent-card"><div class="agent-icon">🧠</div><div class="agent-name" style="color:var(--tealB);">Director</div><div class="agent-sub">Claude AI</div><div class="agent-role">Leest je briefing en elk geüpload bestand. Bouwt het volledige productieplan.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎙️</div><div class="agent-name" style="color:var(--tealL);">Spraakvervaardiging</div><div class="agent-sub">ElevenLabs</div><div class="agent-role">Genereert studiowaardige voice-overs in 29 talen met Multilingual v2.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎬</div><div class="agent-name" style="color:var(--orange);">Videogeneratie</div><div class="agent-sub">Runway Gen-3</div><div class="agent-role">Animeert je foto of PDF-pagina tot een cinematografische clip met slow-zoom en sfeervolle beweging.</div></div>
+  <div class="agent-card"><div class="agent-icon">🖼️</div><div class="agent-name" style="color:var(--emerald);">Beeld-AI</div><div class="agent-sub">DALL-E 3 + Stability</div><div class="agent-role">Genereert hero-afbeeldingen of verbetert je foto cinematografisch op sterkte 0,35.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎵</div><div class="agent-name" style="color:var(--amberL);">Muziek</div><div class="agent-sub">Suno AI</div><div class="agent-role">Maatwerk muziekprompt — genre, BPM, instrumenten — klaar om direct bij suno.ai te genereren.</div></div>
+  <div class="agent-card" style="border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06);"><div class="agent-icon">📄</div><div class="agent-name" style="color:var(--orange);">PDF-intelligentie</div><div class="agent-sub" style="color:rgba(249,115,22,.7);">NIEUW in v3.3</div><div class="agent-role">Elke agent ziet je geüploade PDF — tekst én visuals. Geef een catalogus, merkgids of pitch deck aan alle agenten.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="4">
+      <div class="slide-inner"><div class="orb" style="width:250px;height:250px;background:rgba(249,115,22,.12);top:0;left:-60px;"></div>
+<div class="kicker" style="color:var(--orange);">Nieuw in v3.3</div>
+<div class="headline" style="font-size:clamp(20px,5.5vw,42px);">PDF-intelligentie.<br><span style="color:var(--orange);">Geef je merk</span><br>aan elke agent.</div>
+<div class="subline mt12">Upload een PDF — productcatalogus, merkgids, pitch deck, persbericht — en elke AI-agent ontvangt automatisch zowel de TEKST als de VISUALS als context.</div>
+<div class="pdf-2col mt20">
+  <div>
+    <div class="label-sm" style="margin-bottom:11px;">Hoe het werkt</div>
+    <div class="pdf-flow">
+      <div class="pdf-step"><div class="pdf-dot">📄</div><div class="pdf-text"><strong>Uploaden</strong><span>Sleep een PDF naar de oranje zone. Meerdere PDF's worden ondersteund.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🖼️</div><div class="pdf-text"><strong>Pagina-extractie</strong><span>Elke pagina wordt als JPEG op hoge resolutie gerenderd. Tekst per pagina geëxtraheerd.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🎯</div><div class="pdf-text"><strong>Pagina's toewijzen aan slots</strong><span>Beweeg over een miniatuur → 🎬 naar Runway, ✨ naar Img2Img.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🚀</div><div class="pdf-text"><strong>Pipeline starten</strong><span>Alle agenten krijgen tot 8 pagina's als visuele context plus volledige tekst. Automatisch.</span></div></div>
+    </div>
+  </div>
+  <div>
+    <div class="label-sm" style="margin-bottom:11px;">Welke agenten gebruiken de PDF</div>
+    <div class="pdf-agents">
+      <div class="pdf-agent"><div class="pdf-agent-icon">🧠</div><div class="pdf-agent-name">Director</div><div class="pdf-agent-desc">Merkstem & visuele stijl</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">✍️</div><div class="pdf-agent-name">Copywriter</div><div class="pdf-agent-desc">Productnamen & kernboodschappen</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🌐</div><div class="pdf-agent-name">Vertaler</div><div class="pdf-agent-desc">Consistente terminologie in alle 11 talen</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🖼️</div><div class="pdf-agent-name">DALL-E 3</div><div class="pdf-agent-desc">Hero-afbeelding passend bij PDF-stijl</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🎵</div><div class="pdf-agent-name">Suno AI</div><div class="pdf-agent-desc">Muziekmood vanuit PDF-toon</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🎬</div><div class="pdf-agent-name">Runway</div><div class="pdf-agent-desc">Animeer elke PDF-pagina direct</div></div>
+    </div>
+    <div class="mt12" style="padding:10px 12px;background:rgba(249,115,22,.08);border:1.5px solid rgba(249,115,22,.22);border-radius:8px;font-size:11px;color:var(--white2);line-height:1.55;">📌 <strong style="color:var(--orange);">100% clientside PDF-verwerking.</strong> Je documenten verlaten nooit je browser.</div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="5">
+      <div class="slide-inner"><div class="kicker">De workflow</div>
+<div class="headline" style="font-size:clamp(20px,5vw,36px);">Van briefing naar afgeronde campagne.</div>
+<div style="font-size:12px;color:var(--tealB);margin:8px 0 14px;">7 geautomatiseerde stappen. Één klik. Onder de 5 minuten.</div>
+<div class="pipe-wrap">
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--orange);">01</div><div class="pipe-icon">📄</div></div><div><div class="pipe-label" style="color:var(--orange);">Uploaden</div><div class="pipe-sub">Afbeeldingen, PDF's of je briefing</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealB);">02</div><div class="pipe-icon">🧠</div></div><div><div class="pipe-label" style="color:var(--tealB);">Director</div><div class="pipe-sub">Claude bouwt productieplan</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealL);">03</div><div class="pipe-icon">✍️</div></div><div><div class="pipe-label" style="color:var(--tealL);">Copywriting</div><div class="pipe-sub">Scripts, advertentietekst, captions</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealL);">04</div><div class="pipe-icon">🎙️</div></div><div><div class="pipe-label" style="color:var(--tealL);">Spraak</div><div class="pipe-sub">ElevenLabs voice-over</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--amberL);">05</div><div class="pipe-icon">🎵</div></div><div><div class="pipe-label" style="color:var(--amberL);">Muziek</div><div class="pipe-sub">Suno AI-prompt gereed</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--emerald);">06</div><div class="pipe-icon">🖼️</div></div><div><div class="pipe-label" style="color:var(--emerald);">Beeld</div><div class="pipe-sub">DALL-E 3 of Stability</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--orange);">07</div><div class="pipe-icon">🎬</div></div><div><div class="pipe-label" style="color:var(--orange);">Video</div><div class="pipe-sub">Runway Gen-3 animatie</div></div></div>
+</div>
+<div class="output-bar"><div class="output-pills"><span class="output-pill">✅ Voice-over MP3</span><span class="output-pill">✅ Video MP4</span><span class="output-pill">✅ Hero-afbeelding</span><span class="output-pill">✅ Advertentietekst ×2</span><span class="output-pill">✅ Social Caption</span><span class="output-pill">✅ Muziekprompt</span><span class="output-pill">✅ Volledig Script</span></div></div></div>
+    </div>
+    <div class="slide" data-idx="6">
+      <div class="slide-inner"><div class="kicker">Wat je nodig hebt</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Wat jij inbrengt.<br><span style="color:var(--tealB);">Wat NEXUS levert.</span></div>
+<div class="io-2col mt20">
+  <div class="io-col">
+    <div class="io-head" style="color:var(--muted);">Jij brengt mee</div>
+    <div class="io-row"><span class="io-icon">📄</span><span>PDF-documenten — catalogi, merkgidsen, pitch decks, persberichten</span></div>
+    <div class="io-row"><span class="io-icon">🖼️</span><span>JPG / PNG / WebP foto's — producten, portretten, locaties, logo's</span></div>
+    <div class="io-row"><span class="io-icon">🎬</span><span>MP4-video — bestaand beeldmateriaal als visuele referentie</span></div>
+    <div class="io-row"><span class="io-icon">⚡</span><span>Jouw creatieve briefing — schrijf het natuurlijk, in elke taal, één zin is genoeg</span></div>
+  </div>
+  <div class="io-col" style="border-color:rgba(20,184,166,.25);background:rgba(13,148,136,.05);">
+    <div class="io-head" style="color:var(--tealB);">NEXUS levert</div>
+    <div class="io-row"><span class="io-icon">🎙️</span><span>Professionele voice-over in 29 talen — ElevenLabs Multilingual v2</span></div>
+    <div class="io-row"><span class="io-icon">🎬</span><span>Cinematografische videoclip van 10 seconden — Runway Gen-3</span></div>
+    <div class="io-row"><span class="io-icon">🖼️</span><span>Hero-afbeelding — DALL-E 3 gegenereerd of Stability AI verbeterd</span></div>
+    <div class="io-row"><span class="io-icon">✍️</span><span>Advertentietekst (2 versies) + social caption + script + shot list</span></div>
+    <div class="io-row"><span class="io-icon">🎵</span><span>Suno muziekprompt — genre, BPM, mood, klaar om te plakken</span></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="7">
+      <div class="slide-inner"><div class="kicker" style="color:var(--emerald);">Wereldwijd bereik</div>
+<div class="headline">Eén briefing.<br><span style="color:var(--emerald);">Elf markten.</span></div>
+<div class="subline mt12">NEXUS detecteert de taal van je briefing automatisch en produceert alle uitvoer in elke gewenste taal. Één run. Geen extra kosten.</div>
+<div class="lang-grid">
+  <div class="lang-pill">🇬🇧 English</div><div class="lang-pill">🇳🇱 Nederlands</div><div class="lang-pill">🇪🇸 Español</div>
+  <div class="lang-pill">🇵🇹 Português</div><div class="lang-pill">🇫🇷 Français</div><div class="lang-pill">🇩🇪 Deutsch</div>
+  <div class="lang-pill">🇮🇹 Italiano</div><div class="lang-pill">🇯🇵 日本語</div><div class="lang-pill">🇨🇳 中文</div>
+  <div class="lang-pill">🇸🇦 العربية</div><div class="lang-pill">🎯 Papiamento</div>
+</div>
+<div class="mt16" style="padding:12px 14px;background:rgba(16,185,129,.08);border:1.5px solid rgba(16,185,129,.2);border-radius:8px;font-size:12px;color:var(--white2);line-height:1.55;">🌍 <strong style="color:var(--emerald);">Culturele aanpassing, niet alleen vertaling.</strong> Papiamento-ondersteuning maakt NEXUS uniek voor de Caribische en Nederlandse Antillenmarkt.</div></div>
+    </div>
+    <div class="slide" data-idx="8">
+      <div class="slide-inner"><div class="kicker">Jouw doelgroep</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Gebouwd voor creatieven<br>die <span style="color:var(--tealB);">snel willen bewegen.</span></div>
+<div class="g3 mt20">
+  <div class="uc-card"><div class="uc-icon">🎯</div><div class="uc-who">Creatieve Bureaus</div><div class="uc-what">Produceer 10× meer pitches per week. Laat klanten op dag één AI-videoconcepten zien.</div></div>
+  <div class="uc-card"><div class="uc-icon">🏨</div><div class="uc-who">Toerisme & Horeca</div><div class="uc-what">Upload je brochure-PDF. Krijg in minuten een volledige meertalige videocampagne.</div></div>
+  <div class="uc-card"><div class="uc-icon">🛍️</div><div class="uc-who">E-commerce Merken</div><div class="uc-what">Productcatalogus als PDF → hero video, voice ad, muziek en copy — alles merkconform.</div></div>
+  <div class="uc-card"><div class="uc-icon">🎓</div><div class="uc-who">Content Creators</div><div class="uc-what">Verander elk idee in een compleet videoproductiepakket — script, spraak, visuals, muziek.</div></div>
+  <div class="uc-card"><div class="uc-icon">📢</div><div class="uc-who">Marketingteams</div><div class="uc-what">Meertalige campagnes zonder meertalige budgetten. Één briefing, elf marktadaptaties.</div></div>
+  <div class="uc-card"><div class="uc-icon">🚀</div><div class="uc-who">Startups & Founders</div><div class="uc-what">Investor pitch deck als PDF-input → volledige merkvideo in onder 5 minuten, klaar om te delen.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="9">
+      <div class="slide-inner"><div class="kicker">Vertrouwen & beveiliging</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Enterprise-kwaliteit.<br><span style="color:var(--tealB);">Nul infrastructuur.</span></div>
+<div class="tech-grid mt20">
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Enkel HTML-bestand</div><div class="tech-body">Open in elke browser. Geen installatie, geen server, geen cloudaccount. Werkt op Mac, Windows, iPad.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Alleen sessieopslag</div><div class="tech-body">API-sleutels leven alleen in het browsergeheugen. Nooit op schijf opgeslagen. Tabblad sluiten = weg.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">AVG / GDPR by design</div><div class="tech-body">Geen data gaat naar derden buiten de API-aanroepen die jij expliciet activeert.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">PDF.js — 100% clientside</div><div class="tech-body">Alle PDF-verwerking en tekstextractie vindt plaats in je browser. Documenten verlaten je apparaat nooit.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Eigen sleutels meenemen</div><div class="tech-body">Jij beheert elk AI-abonnement. NEXUS bewaart of proxyt je inloggegevens nooit.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Offline bruikbaar</div><div class="tech-body">Volledige creatieve workflow zonder internet — behalve de API-aanroepen die jij activeert.</div></div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="10">
+      <div class="slide-inner"><div class="kicker">De verschuiving</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">De verschuiving is reëel.</div>
+<div class="ba-2col mt20">
+  <div class="ba-col before">
+    <div class="ba-head" style="color:var(--red);">✗ Zonder NEXUS</div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>3–10 dagen voor een videocampagne</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>€2.000–15.000 aan bureau-/freelancerkosten</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>5 verschillende tools leren en beheren</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Vertaling = per markt inhuren</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Merkinconsistentie tussen assets</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Revisierondes kosten extra tijd & geld</span></div>
+  </div>
+  <div class="ba-col after">
+    <div class="ba-head" style="color:var(--tealL);">✓ Met NEXUS v3.3</div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Volledige campagne in <strong style="color:var(--tealL);">&lt; 5 minuten</strong></span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Eenmalige platformkosten. Geen kosten per project</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Eén browsertab. Geen leercurve</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>11 talen ingebouwd. Één klik</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span><strong style="color:var(--tealL);">PDF-merkgids</strong> voedt elke agent</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Oneindig itereren. Zelfde kosten</span></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="11">
+      <div class="slide-inner"><div class="orb" style="width:300px;height:300px;background:rgba(13,148,136,.12);top:10%;left:50%;transform:translateX(-50%);"></div>
+<div style="text-align:center;max-width:700px;margin:0 auto;">
+  <div style="font-size:clamp(40px,12vw,86px);font-weight:900;letter-spacing:-.04em;line-height:.92;color:var(--white);margin-bottom:10px;">BEGIN VANDAAG.</div>
+  <div style="font-size:clamp(13px,3vw,16px);color:var(--tealB);margin-bottom:20px;font-weight:500;">Je concurrenten wachten nog steeds op hun bureau.</div>
+  <div class="cta-3col">
+    <div class="cta-card"><div class="cta-icon">📥</div><div class="cta-head" style="color:var(--tealB);">Haal NEXUS v3.3</div><div class="cta-sub">Enkel HTML-bestand. Openen in elke browser. Mac, Windows, iPad.</div></div>
+    <div class="cta-card"><div class="cta-icon">🔑</div><div class="cta-head" style="color:var(--emerald);">Verbind je API's</div><div class="cta-sub">ElevenLabs, Runway & DALL-E — allemaal met gratis tier om direct te starten.</div></div>
+    <div class="cta-card"><div class="cta-icon">🚀</div><div class="cta-head" style="color:var(--orange);">Start je eerste campagne</div><div class="cta-sub">Upload een PDF of foto. Schrijf één zin. Druk op starten. Klaar in onder 5 minuten.</div></div>
+  </div>
+  <div class="contact-bar mt20">
+    <a href="https://codeniacs.nl" target="_blank">🌐 codeniacs.nl</a>
+    <a href="mailto:g.hasham@smart-ondernemen.nl">✉ g.hasham@smart-ondernemen.nl</a>
+  </div>
+  <div class="mt16" style="font-size:10px;color:var(--muted);">NEXUS v3.3 · Multi-Agent Creatief Platform · Codeniacs · 2026</div>
+</div></div>
+    </div>
+  </div>
+</div>
+<div class="lang-set" data-lang="es" id="set-es" style="display:none">
+  <div class="slides-track" id="track-es">
+    <div class="slide" data-idx="0">
+      <div class="slide-inner">/* 1 — COVER ES */
+`<div class="orb" style="width:300px;height:300px;background:rgba(13,148,136,.15);top:10%;left:-60px;"></div>
+<div class="cover-2col">
+  <div>
+    <div class="cover-word">NEXUS</div>
+    <div class="cover-badges">
+      <span class="badge teal">v3.3</span>
+      <span class="badge orange">+ PDF NUEVO</span>
+      <span class="badge green">6 Agentes IA</span>
+    </div>
+    <div class="cover-tagline">Plataforma Creativa Multi-Agente con IA</div>
+    <div class="cover-sub">Del briefing a la campaña de video terminada en minutos.<br>Sin agencia. Sin esperas. Sin compromisos.</div>
+    <div class="mt16" style="font-size:11px;color:var(--muted);"><a href="https://codeniacs.nl" target="_blank" style="color:var(--tealL);text-decoration:none;">🌐 codeniacs.nl</a></div>
+  </div>
+  <div class="cover-agents mt20">
+    <div class="ca-card" style="border-color:rgba(20,184,166,.3);"><div class="ca-icon">🧠</div><div class="ca-label" style="color:var(--tealB);">Director</div></div>
+    <div class="ca-card" style="border-color:rgba(20,184,166,.25);"><div class="ca-icon">🎙️</div><div class="ca-label" style="color:var(--tealL);">Voz</div></div>
+    <div class="ca-card" style="border-color:rgba(249,115,22,.3);"><div class="ca-icon">🎬</div><div class="ca-label" style="color:var(--orange);">Video</div></div>
+    <div class="ca-card" style="border-color:rgba(16,185,129,.3);"><div class="ca-icon">🖼️</div><div class="ca-label" style="color:var(--emerald);">Imagen</div></div>
+    <div class="ca-card" style="border-color:rgba(245,158,11,.3);"><div class="ca-icon">🎵</div><div class="ca-label" style="color:var(--amberL);">Música</div></div>
+    <div class="ca-card" style="border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.07);"><div class="ca-icon">📄</div><div class="ca-label" style="color:var(--orange);">PDF</div></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="1">
+      <div class="slide-inner"><div class="kicker">El problema</div>
+<div class="headline">La forma antigua<br><span style="color:var(--red);">te está costando.</span></div>
+<div class="subline">Cada proyecto creativo significa manejar cinco herramientas, coordinar tres freelancers y aguantar dos semanas de revisiones.</div>
+<div class="g2 mt20">
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">⏳</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Días, no minutos</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Del briefing al anuncio de video terminado solía tardar 3–10 días laborables entre agencias, editores y locutores.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">💸</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Los honorarios se acumulan</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Redactor. Locutor. Editor de video. Motion designer. Licencias de música. €2.000–15.000 antes del lanzamiento.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">🔄</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Revisiones interminables</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Un cambio se propaga a todos los proveedores. La guía de marca vive en un PDF que nadie lee. Los assets se pierden.</div></div>
+  <div class="card-dark"><div style="font-size:26px;margin-bottom:8px;">🌐</div><div style="font-size:13px;font-weight:800;color:var(--white);margin-bottom:5px;">Barreras de idioma</div><div style="font-size:12px;color:var(--white2);line-height:1.6;">Las campañas multilingüe significan contratar por mercado. Un anuncio en neerlandés cuesta el doble que uno en inglés.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="2">
+      <div class="slide-inner"><div class="kicker">La solución</div>
+<div class="headline">NEXUS es tu <span style="color:var(--tealB);">agencia creativa</span> en una pestaña.</div>
+<div class="subline">Sube un briefing. Sube tus imágenes o PDFs. Pulsa ejecutar. NEXUS orquesta seis servicios de IA de clase mundial simultáneamente — produciendo locuciones profesionales, videos cinematográficos, copy de marca y música en minutos.</div>
+<div class="g2-stat mt20">
+  <div class="stat-card"><div class="stat-num" style="color:var(--tealB);">6</div><div class="stat-label">Agentes IA</div><div class="stat-sub">trabajando en paralelo</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--amberL);">&lt;5</div><div class="stat-label">Minutos</div><div class="stat-sub">del briefing al video</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--emerald);">11</div><div class="stat-label">Idiomas</div><div class="stat-sub">salida en cualquier idioma</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--orange);">1</div><div class="stat-label">Pestaña</div><div class="stat-sub">sin instalación, sin servidor</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="3">
+      <div class="slide-inner"><div class="kicker">Cómo funciona</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Seis agentes IA. <span style="color:var(--tealB);">Un pipeline.</span></div>
+<div style="font-size:12px;color:var(--tealB);margin:8px 0 14px;">Cada agente es un especialista de clase mundial. NEXUS Director los orquesta a todos.</div>
+<div class="g3">
+  <div class="agent-card"><div class="agent-icon">🧠</div><div class="agent-name" style="color:var(--tealB);">Director</div><div class="agent-sub">Claude AI</div><div class="agent-role">Lee tu briefing y cada archivo subido. Construye el plan de producción completo.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎙️</div><div class="agent-name" style="color:var(--tealL);">Síntesis de Voz</div><div class="agent-sub">ElevenLabs</div><div class="agent-role">Genera locuciones de calidad estudio en 29 idiomas usando Multilingual v2.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎬</div><div class="agent-name" style="color:var(--orange);">Generación de Video</div><div class="agent-sub">Runway Gen-3</div><div class="agent-role">Anima tu foto o página PDF en un clip cinematográfico con slow-zoom y movimiento atmosférico.</div></div>
+  <div class="agent-card"><div class="agent-icon">🖼️</div><div class="agent-name" style="color:var(--emerald);">IA de Imagen</div><div class="agent-sub">DALL-E 3 + Stability</div><div class="agent-role">Genera imágenes hero o mejora tu foto cinematográficamente a intensidad 0,35.</div></div>
+  <div class="agent-card"><div class="agent-icon">🎵</div><div class="agent-name" style="color:var(--amberL);">Música</div><div class="agent-sub">Suno AI</div><div class="agent-role">Prompt musical personalizado — género, BPM, instrumentos — listo para generar en suno.ai.</div></div>
+  <div class="agent-card" style="border-color:rgba(249,115,22,.35);background:rgba(249,115,22,.06);"><div class="agent-icon">📄</div><div class="agent-name" style="color:var(--orange);">Inteligencia PDF</div><div class="agent-sub" style="color:rgba(249,115,22,.7);">NUEVO en v3.3</div><div class="agent-role">Cada agente ve tu PDF subido — texto y visuales. Alimenta un catálogo, guía de marca o pitch deck a todos.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="4">
+      <div class="slide-inner"><div class="orb" style="width:250px;height:250px;background:rgba(249,115,22,.12);top:0;left:-60px;"></div>
+<div class="kicker" style="color:var(--orange);">Nuevo en v3.3</div>
+<div class="headline" style="font-size:clamp(20px,5.5vw,42px);">Inteligencia PDF.<br><span style="color:var(--orange);">Alimenta tu marca</span><br>a cada agente.</div>
+<div class="subline mt12">Sube cualquier PDF — catálogo de productos, guía de marca, pitch deck, comunicado de prensa — y cada agente de IA recibe tanto el TEXTO como los VISUALES como contexto.</div>
+<div class="pdf-2col mt20">
+  <div>
+    <div class="label-sm" style="margin-bottom:11px;">Cómo funciona</div>
+    <div class="pdf-flow">
+      <div class="pdf-step"><div class="pdf-dot">📄</div><div class="pdf-text"><strong>Subir</strong><span>Arrastra cualquier PDF a la zona naranja. Varios PDFs soportados.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🖼️</div><div class="pdf-text"><strong>Extracción de páginas</strong><span>Cada página renderizada como JPEG en alta resolución. Texto extraído por página.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🎯</div><div class="pdf-text"><strong>Asignar páginas a slots</strong><span>Pasa el cursor sobre una miniatura → 🎬 a Runway, ✨ a Img2Img.</span></div></div>
+      <div class="pdf-step"><div class="pdf-dot">🚀</div><div class="pdf-text"><strong>Ejecutar Pipeline</strong><span>Todos los agentes reciben hasta 8 páginas como contexto visual más texto completo. Automático.</span></div></div>
+    </div>
+  </div>
+  <div>
+    <div class="label-sm" style="margin-bottom:11px;">Qué agentes usan el PDF</div>
+    <div class="pdf-agents">
+      <div class="pdf-agent"><div class="pdf-agent-icon">🧠</div><div class="pdf-agent-name">Director</div><div class="pdf-agent-desc">Voz de marca y estilo visual</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">✍️</div><div class="pdf-agent-name">Redactor</div><div class="pdf-agent-desc">Nombres de producto y mensajes clave</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🌐</div><div class="pdf-agent-name">Traductor</div><div class="pdf-agent-desc">Terminología consistente en 11 idiomas</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🖼️</div><div class="pdf-agent-name">DALL-E 3</div><div class="pdf-agent-desc">Imagen hero acorde al estilo del PDF</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🎵</div><div class="pdf-agent-name">Suno AI</div><div class="pdf-agent-desc">Estado de ánimo musical del PDF</div></div>
+      <div class="pdf-agent"><div class="pdf-agent-icon">🎬</div><div class="pdf-agent-name">Runway</div><div class="pdf-agent-desc">Anima cualquier página PDF directamente</div></div>
+    </div>
+    <div class="mt12" style="padding:10px 12px;background:rgba(249,115,22,.08);border:1.5px solid rgba(249,115,22,.22);border-radius:8px;font-size:11px;color:var(--white2);line-height:1.55;">📌 <strong style="color:var(--orange);">Procesamiento PDF 100% en cliente.</strong> Tus documentos nunca salen de tu navegador.</div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="5">
+      <div class="slide-inner"><div class="kicker">El flujo de trabajo</div>
+<div class="headline" style="font-size:clamp(20px,5vw,36px);">Del briefing a la campaña terminada.</div>
+<div style="font-size:12px;color:var(--tealB);margin:8px 0 14px;">7 pasos automatizados. Un clic. Menos de 5 minutos.</div>
+<div class="pipe-wrap">
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--orange);">01</div><div class="pipe-icon">📄</div></div><div><div class="pipe-label" style="color:var(--orange);">Subir</div><div class="pipe-sub">Imágenes, PDFs o solo tu briefing</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealB);">02</div><div class="pipe-icon">🧠</div></div><div><div class="pipe-label" style="color:var(--tealB);">Director</div><div class="pipe-sub">Claude construye el plan de producción</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealL);">03</div><div class="pipe-icon">✍️</div></div><div><div class="pipe-label" style="color:var(--tealL);">Redacción</div><div class="pipe-sub">Scripts, copy, subtítulos</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--tealL);">04</div><div class="pipe-icon">🎙️</div></div><div><div class="pipe-label" style="color:var(--tealL);">Voz</div><div class="pipe-sub">Locución ElevenLabs</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--amberL);">05</div><div class="pipe-icon">🎵</div></div><div><div class="pipe-label" style="color:var(--amberL);">Música</div><div class="pipe-sub">Prompt Suno AI listo</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--emerald);">06</div><div class="pipe-icon">🖼️</div></div><div><div class="pipe-label" style="color:var(--emerald);">Imagen</div><div class="pipe-sub">DALL-E 3 o Stability</div></div></div>
+  <div class="pipe-connector">↓</div>
+  <div class="pipe-step"><div style="flex-shrink:0;text-align:center;"><div class="pipe-num" style="color:var(--orange);">07</div><div class="pipe-icon">🎬</div></div><div><div class="pipe-label" style="color:var(--orange);">Video</div><div class="pipe-sub">Animación Runway Gen-3</div></div></div>
+</div>
+<div class="output-bar"><div class="output-pills"><span class="output-pill">✅ Locución MP3</span><span class="output-pill">✅ Video MP4</span><span class="output-pill">✅ Imagen Hero</span><span class="output-pill">✅ Copy Pub. ×2</span><span class="output-pill">✅ Caption Social</span><span class="output-pill">✅ Prompt Musical</span><span class="output-pill">✅ Guión Completo</span></div></div></div>
+    </div>
+    <div class="slide" data-idx="6">
+      <div class="slide-inner"><div class="kicker">Lo que necesitas</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Lo que tú aportas.<br><span style="color:var(--tealB);">Lo que NEXUS crea.</span></div>
+<div class="io-2col mt20">
+  <div class="io-col">
+    <div class="io-head" style="color:var(--muted);">Tú aportas</div>
+    <div class="io-row"><span class="io-icon">📄</span><span>Documentos PDF — catálogos, guías de marca, pitch decks, comunicados</span></div>
+    <div class="io-row"><span class="io-icon">🖼️</span><span>Fotos JPG / PNG / WebP — productos, retratos, locaciones, logos</span></div>
+    <div class="io-row"><span class="io-icon">🎬</span><span>Video MP4 — material existente como referencia visual</span></div>
+    <div class="io-row"><span class="io-icon">⚡</span><span>Tu briefing creativo — escríbelo en cualquier idioma, una frase es suficiente</span></div>
+  </div>
+  <div class="io-col" style="border-color:rgba(20,184,166,.25);background:rgba(13,148,136,.05);">
+    <div class="io-head" style="color:var(--tealB);">NEXUS entrega</div>
+    <div class="io-row"><span class="io-icon">🎙️</span><span>Locución profesional en 29 idiomas — ElevenLabs Multilingual v2</span></div>
+    <div class="io-row"><span class="io-icon">🎬</span><span>Clip de video cinematográfico de 10 segundos — Runway Gen-3</span></div>
+    <div class="io-row"><span class="io-icon">🖼️</span><span>Imagen hero — generada por DALL-E 3 o mejorada con Stability AI</span></div>
+    <div class="io-row"><span class="io-icon">✍️</span><span>Copy publicitario (2 versiones) + caption social + guión + shot list</span></div>
+    <div class="io-row"><span class="io-icon">🎵</span><span>Prompt musical Suno — género, BPM, mood, listo para pegar</span></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="7">
+      <div class="slide-inner"><div class="kicker" style="color:var(--emerald);">Alcance global</div>
+<div class="headline">Un briefing.<br><span style="color:var(--emerald);">Once mercados.</span></div>
+<div class="subline mt12">NEXUS detecta el idioma de tu briefing automáticamente y produce toda la salida en cualquiera de 11 idiomas. Una ejecución. Sin coste adicional.</div>
+<div class="lang-grid">
+  <div class="lang-pill">🇬🇧 English</div><div class="lang-pill">🇳🇱 Nederlands</div><div class="lang-pill">🇪🇸 Español</div>
+  <div class="lang-pill">🇵🇹 Português</div><div class="lang-pill">🇫🇷 Français</div><div class="lang-pill">🇩🇪 Deutsch</div>
+  <div class="lang-pill">🇮🇹 Italiano</div><div class="lang-pill">🇯🇵 日本語</div><div class="lang-pill">🇨🇳 中文</div>
+  <div class="lang-pill">🇸🇦 العربية</div><div class="lang-pill">🎯 Papiamento</div>
+</div>
+<div class="mt16" style="padding:12px 14px;background:rgba(16,185,129,.08);border:1.5px solid rgba(16,185,129,.2);border-radius:8px;font-size:12px;color:var(--white2);line-height:1.55;">🌍 <strong style="color:var(--emerald);">Adaptación cultural, no solo traducción.</strong> El soporte de Papiamento hace a NEXUS único para el mercado caribeño y de las Antillas Neerlandesas.</div></div>
+    </div>
+    <div class="slide" data-idx="8">
+      <div class="slide-inner"><div class="kicker">Tu audiencia</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Creado para creativos<br>que <span style="color:var(--tealB);">se mueven rápido.</span></div>
+<div class="g3 mt20">
+  <div class="uc-card"><div class="uc-icon">🎯</div><div class="uc-who">Agencias Creativas</div><div class="uc-what">Produce 10× más pitches por semana. Muestra a clientes conceptos de video IA el primer día.</div></div>
+  <div class="uc-card"><div class="uc-icon">🏨</div><div class="uc-who">Turismo & Hostelería</div><div class="uc-what">Sube tu brochure PDF. Obtén una campaña de video multilingüe completa en minutos.</div></div>
+  <div class="uc-card"><div class="uc-icon">🛍️</div><div class="uc-who">Marcas E-commerce</div><div class="uc-what">Catálogo PDF → video hero, anuncio de voz, música y copy — todo coherente con la marca.</div></div>
+  <div class="uc-card"><div class="uc-icon">🎓</div><div class="uc-who">Creadores de Contenido</div><div class="uc-what">Convierte cualquier idea en un paquete completo de producción de video — guión, voz, visuales, música.</div></div>
+  <div class="uc-card"><div class="uc-icon">📢</div><div class="uc-who">Equipos de Marketing</div><div class="uc-what">Campañas multilingüe sin presupuestos multilingüe. Un briefing, once adaptaciones de mercado.</div></div>
+  <div class="uc-card"><div class="uc-icon">🚀</div><div class="uc-who">Startups & Founders</div><div class="uc-what">Pitch deck de inversores como PDF → video de marca completo en menos de 5 minutos, listo para compartir.</div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="9">
+      <div class="slide-inner"><div class="kicker">Confianza y seguridad</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">Nivel empresarial.<br><span style="color:var(--tealB);">Cero infraestructura.</span></div>
+<div class="tech-grid mt20">
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Archivo HTML único</div><div class="tech-body">Abre en cualquier navegador. Sin instalación, sin servidor, sin cuenta en la nube. Mac, Windows, iPad.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Claves solo en sesión</div><div class="tech-body">Las claves API viven solo en memoria del navegador. Nunca escritas en disco. Cierra la pestaña — desaparecen.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">AVG / GDPR por diseño</div><div class="tech-body">Ningún dato sale a terceros más allá de las llamadas API que tú activas explícitamente.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">PDF.js — 100% en cliente</div><div class="tech-body">Todo el procesamiento PDF ocurre en tu navegador. Los documentos nunca salen de tu dispositivo.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Trae tus propias claves</div><div class="tech-body">Tú controlas cada suscripción de IA. NEXUS nunca guarda ni enruta tus credenciales.</div></div></div>
+  <div class="tech-item"><div class="tech-check">✓</div><div><div class="tech-head">Funciona sin internet</div><div class="tech-body">Flujo creativo completo sin conexión — excepto las llamadas a la API de IA que tú actives.</div></div></div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="10">
+      <div class="slide-inner"><div class="kicker">El cambio</div>
+<div class="headline" style="font-size:clamp(20px,5vw,38px);">El cambio es real.</div>
+<div class="ba-2col mt20">
+  <div class="ba-col before">
+    <div class="ba-head" style="color:var(--red);">✗ Sin NEXUS</div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>3–10 días para una campaña de video</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>€2.000–15.000 en honorarios de agencia/freelancer</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>5 herramientas diferentes que aprender y gestionar</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Traducción = contratar por mercado</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Inconsistencia de marca entre assets</span></div>
+    <div class="ba-item"><span class="ba-x">✗</span><span>Las revisiones cuestan tiempo y dinero extra</span></div>
+  </div>
+  <div class="ba-col after">
+    <div class="ba-head" style="color:var(--tealL);">✓ Con NEXUS v3.3</div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Campaña completa en <strong style="color:var(--tealL);">&lt; 5 minutos</strong></span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Coste único de plataforma. Sin tarifas por proyecto</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Una pestaña. Sin curva de aprendizaje</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>11 idiomas integrados. Un clic</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span><strong style="color:var(--tealL);">Guía de marca PDF</strong> alimenta a cada agente</span></div>
+    <div class="ba-item"><span class="ba-ck">✓</span><span>Iteraciones infinitas. Mismo coste</span></div>
+  </div>
+</div></div>
+    </div>
+    <div class="slide" data-idx="11">
+      <div class="slide-inner"><div class="orb" style="width:300px;height:300px;background:rgba(13,148,136,.12);top:10%;left:50%;transform:translateX(-50%);"></div>
+<div style="text-align:center;max-width:700px;margin:0 auto;">
+  <div style="font-size:clamp(36px,11vw,86px);font-weight:900;letter-spacing:-.04em;line-height:.92;color:var(--white);margin-bottom:10px;">EMPIEZA HOY.</div>
+  <div style="font-size:clamp(13px,3vw,16px);color:var(--tealB);margin-bottom:20px;font-weight:500;">Tu competencia sigue esperando a su agencia.</div>
+  <div class="cta-3col">
+    <div class="cta-card"><div class="cta-icon">📥</div><div class="cta-head" style="color:var(--tealB);">Obtén NEXUS v3.3</div><div class="cta-sub">Archivo HTML único. Abre en cualquier navegador. Mac, Windows, iPad.</div></div>
+    <div class="cta-card"><div class="cta-icon">🔑</div><div class="cta-head" style="color:var(--emerald);">Conecta tus APIs</div><div class="cta-sub">ElevenLabs, Runway & DALL-E — todos tienen tier gratuito para empezar de inmediato.</div></div>
+    <div class="cta-card"><div class="cta-icon">🚀</div><div class="cta-head" style="color:var(--orange);">Ejecuta tu primera campaña</div><div class="cta-sub">Sube un PDF o foto. Escribe una frase. Pulsa Ejecutar. Listo en menos de 5 minutos.</div></div>
+  </div>
+  <div class="contact-bar mt20">
+    <a href="https://codeniacs.nl" target="_blank">🌐 codeniacs.nl</a>
+    <a href="mailto:g.hasham@smart-ondernemen.nl">✉ g.hasham@smart-ondernemen.nl</a>
+  </div>
+  <div class="mt16" style="font-size:10px;color:var(--muted);">NEXUS v3.3 · Plataforma Creativa Multi-Agente · Codeniacs · 2026</div>
+</div></div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<div id="menuOverlay" onclick="closeMenu()"></div>
+<div id="menuDrawer">
+  <div class="menu-drawer-head">
+    <span class="menu-drawer-title" id="drawerTitle">Slide Overview</span>
+    <button class="menu-close" onclick="closeMenu()">&#10005;</button>
+  </div>
+  <div class="menu-drawer-list" id="menuList">
+<div class="menu-lang" id="menu-en" style="display:block">
+  <button class="sm-item active" data-lang="en" data-idx="0" onclick="goToFromMenu(0)">
+    <span class="sm-num">01</span>Cover — NEXUS v3.3
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="1" onclick="goToFromMenu(1)">
+    <span class="sm-num">02</span>The Problem
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="2" onclick="goToFromMenu(2)">
+    <span class="sm-num">03</span>What is NEXUS?
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="3" onclick="goToFromMenu(3)">
+    <span class="sm-num">04</span>Six AI Agents
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="4" onclick="goToFromMenu(4)">
+    <span class="sm-num">05</span>PDF Intelligence
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="5" onclick="goToFromMenu(5)">
+    <span class="sm-num">06</span>Pipeline Flow
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="6" onclick="goToFromMenu(6)">
+    <span class="sm-num">07</span>Inputs & Outputs
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="7" onclick="goToFromMenu(7)">
+    <span class="sm-num">08</span>11 Languages
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="8" onclick="goToFromMenu(8)">
+    <span class="sm-num">09</span>Who Is This For?
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="9" onclick="goToFromMenu(9)">
+    <span class="sm-num">10</span>Security & Tech
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="10" onclick="goToFromMenu(10)">
+    <span class="sm-num">11</span>Before vs After
+  </button>
+  <button class="sm-item" data-lang="en" data-idx="11" onclick="goToFromMenu(11)">
+    <span class="sm-num">12</span>Start Today
+  </button>
+</div>
+<div class="menu-lang" id="menu-nl" style="display:none">
+  <button class="sm-item active" data-lang="nl" data-idx="0" onclick="goToFromMenu(0)">
+    <span class="sm-num">01</span>Cover — NEXUS v3.3
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="1" onclick="goToFromMenu(1)">
+    <span class="sm-num">02</span>Het probleem
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="2" onclick="goToFromMenu(2)">
+    <span class="sm-num">03</span>Wat is NEXUS?
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="3" onclick="goToFromMenu(3)">
+    <span class="sm-num">04</span>Zes AI-Agenten
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="4" onclick="goToFromMenu(4)">
+    <span class="sm-num">05</span>PDF-intelligentie
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="5" onclick="goToFromMenu(5)">
+    <span class="sm-num">06</span>Pipeline Flow
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="6" onclick="goToFromMenu(6)">
+    <span class="sm-num">07</span>Input & Output
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="7" onclick="goToFromMenu(7)">
+    <span class="sm-num">08</span>11 Talen
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="8" onclick="goToFromMenu(8)">
+    <span class="sm-num">09</span>Voor wie is dit?
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="9" onclick="goToFromMenu(9)">
+    <span class="sm-num">10</span>Beveiliging & Tech
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="10" onclick="goToFromMenu(10)">
+    <span class="sm-num">11</span>Voor vs Na
+  </button>
+  <button class="sm-item" data-lang="nl" data-idx="11" onclick="goToFromMenu(11)">
+    <span class="sm-num">12</span>Begin vandaag
+  </button>
+</div>
+<div class="menu-lang" id="menu-es" style="display:none">
+  <button class="sm-item active" data-lang="es" data-idx="0" onclick="goToFromMenu(0)">
+    <span class="sm-num">01</span>Cover — NEXUS v3.3
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="1" onclick="goToFromMenu(1)">
+    <span class="sm-num">02</span>El Problema
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="2" onclick="goToFromMenu(2)">
+    <span class="sm-num">03</span>¿Qué es NEXUS?
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="3" onclick="goToFromMenu(3)">
+    <span class="sm-num">04</span>Seis Agentes IA
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="4" onclick="goToFromMenu(4)">
+    <span class="sm-num">05</span>Inteligencia PDF
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="5" onclick="goToFromMenu(5)">
+    <span class="sm-num">06</span>Flujo del Pipeline
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="6" onclick="goToFromMenu(6)">
+    <span class="sm-num">07</span>Entradas y Salidas
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="7" onclick="goToFromMenu(7)">
+    <span class="sm-num">08</span>11 Idiomas
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="8" onclick="goToFromMenu(8)">
+    <span class="sm-num">09</span>¿Para quién es?
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="9" onclick="goToFromMenu(9)">
+    <span class="sm-num">10</span>Seguridad & Tech
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="10" onclick="goToFromMenu(10)">
+    <span class="sm-num">11</span>Antes vs Después
+  </button>
+  <button class="sm-item" data-lang="es" data-idx="11" onclick="goToFromMenu(11)">
+    <span class="sm-num">12</span>Empieza Hoy
+  </button>
+</div>
+  </div>
+</div>
+
+<div id="swipeHint">
+  <span class="hide-mob">&#8592;&#8594;&nbsp;</span>
+  <span id="hintText">Swipe or tap &#8249; &#8250;</span>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   NEXUS PITCH DECK ENGINE
+   Safari-safe: no const/let, no arrow fns,
+   no template literals, no forEach on NodeList,
+   no innerHTML, no optional chaining
+═══════════════════════════════════════════ */
+var lang = 'en';
+var cur  = 0;
+var N    = 12;
+
+var DRAWERS = {en:'Slide Overview',nl:'Diaoverzicht',es:'Vista General'};
+var HINTS   = {en:'Swipe or tap ‹ ›',nl:'Veeg of tik ‹ ›',es:'Desliza o toca ‹ ›'};
+
+/* ── SET VIEWPORT HEIGHT in explicit pixels ──
+   The ONLY reliable cross-browser/iOS way.
+   height:100% chains fail on iPhone when Safari toolbar is visible.
+   We measure the real available height and set px on every element. */
+function setVH() {
+  var winH = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+  var navH = 54; /* topNav 52px + progressBar 2px */
+  var vpH  = Math.floor(winH - navH);
+  if (vpH < 80) vpH = 80;
+
+  var vp = document.getElementById('slidesVP');
+  if (vp) {
+    vp.style.height = vpH + 'px';
+    vp.style.maxHeight = vpH + 'px';
+  }
+
+  /* Set deck bottom so it doesn't extend past visual viewport */
+  var deck = document.getElementById('deck');
+  if (deck) deck.style.height = winH + 'px';
+
+  /* Explicitly size every lang-set, track, and slide */
+  var sets = document.querySelectorAll('.lang-set');
+  for (var i = 0; i < sets.length; i++) {
+    sets[i].style.height = vpH + 'px';
+  }
+  var tracks = document.querySelectorAll('.slides-track');
+  for (var i = 0; i < tracks.length; i++) {
+    tracks[i].style.height = vpH + 'px';
+  }
+  var slides = document.querySelectorAll('.slide');
+  for (var i = 0; i < slides.length; i++) {
+    slides[i].style.height = vpH + 'px';
+  }
+}
+
+/* ── NAVIGATE ── */
+function goTo(n) {
+  if (n < 0 || n >= N) return;
+  cur = n;
+  var track = document.getElementById('track-' + lang);
+  if (track) {
+    track.style.webkitTransform = 'translateX(-' + (cur * 100) + '%)';
+    track.style.transform       = 'translateX(-' + (cur * 100) + '%)';
+  }
+  /* Scroll active slide back to top */
+  var slides = document.querySelectorAll('#set-' + lang + ' .slide');
+  if (slides[cur]) slides[cur].scrollTop = 0;
+  update();
+}
+function go(d) { goTo(cur + d); }
+function goToFromMenu(n) { goTo(n); closeMenu(); }
+
+/* ── UPDATE UI ── */
+function update() {
+  document.getElementById('progressFill').style.width = ((cur + 1) / N * 100) + '%';
+  document.getElementById('navCount').textContent = (cur + 1) + ' / ' + N;
+  document.getElementById('prevBtn').disabled = (cur === 0);
+  document.getElementById('nextBtn').disabled = (cur === N - 1);
+
+  var pills = document.querySelectorAll('.nav-pill[data-lang="' + lang + '"]');
+  for (var i = 0; i < pills.length; i++) {
+    if (i === cur) pills[i].className = 'nav-pill active';
+    else pills[i].className = 'nav-pill';
+  }
+  var items = document.querySelectorAll('.sm-item[data-lang="' + lang + '"]');
+  for (var i = 0; i < items.length; i++) {
+    if (i === cur) items[i].className = 'sm-item active';
+    else items[i].className = 'sm-item';
+  }
+  /* Scroll active pill into view */
+  var activePill = document.querySelector('.nav-pill[data-lang="' + lang + '"][data-idx="' + cur + '"]');
+  if (activePill && activePill.scrollIntoView) {
+    activePill.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+  }
+}
+
+/* ── SET LANGUAGE ── */
+function setLang(l) {
+  /* Hide current */
+  var oldSet = document.getElementById('set-' + lang);
+  if (oldSet) oldSet.style.display = 'none';
+  var oldPills = document.getElementById('pills-' + lang);
+  if (oldPills) oldPills.style.display = 'none';
+  var oldMenu = document.getElementById('menu-' + lang);
+  if (oldMenu) oldMenu.style.display = 'none';
+
+  lang = l;
+  cur = 0;
+
+  /* Show new */
+  var newSet = document.getElementById('set-' + lang);
+  if (newSet) newSet.style.display = 'block';
+  var newPills = document.getElementById('pills-' + lang);
+  if (newPills) newPills.style.display = '-webkit-flex'; /* iOS Safari */
+
+  /* Safer: set display then override for non-webkit */
+  if (newPills) {
+    newPills.style.display = 'flex';
+  }
+  var newMenu = document.getElementById('menu-' + lang);
+  if (newMenu) newMenu.style.display = 'block';
+
+  /* Reset track */
+  var track = document.getElementById('track-' + lang);
+  if (track) {
+    track.style.webkitTransition = 'none';
+    track.style.transition = 'none';
+    track.style.webkitTransform = 'translateX(0)';
+    track.style.transform = 'translateX(0)';
+    /* Re-enable after paint */
+    setTimeout(function() {
+      if (track) {
+        track.style.webkitTransition = '';
+        track.style.transition = '';
+      }
+    }, 50);
+  }
+
+  /* Update lang buttons */
+  var btns = ['EN','NL','ES'];
+  for (var i = 0; i < btns.length; i++) {
+    var btn = document.getElementById('lb' + btns[i]);
+    if (btn) {
+      if (btns[i].toLowerCase() === l) btn.className = 'lang-btn active';
+      else btn.className = 'lang-btn';
+    }
+  }
+
+  var dt = document.getElementById('drawerTitle');
+  if (dt) dt.textContent = DRAWERS[l] || 'Overview';
+  var ht = document.getElementById('hintText');
+  if (ht) ht.textContent = HINTS[l] || '';
+  document.documentElement.lang = l;
+
+  setVH();
+  update();
+}
+
+/* ── MENU ── */
+function toggleMenu() {
+  var d = document.getElementById('menuDrawer');
+  var o = document.getElementById('menuOverlay');
+  var b = document.getElementById('menuBtn');
+  if (!d) return;
+  var isOpen = d.className.indexOf('open') >= 0;
+  if (isOpen) {
+    d.className = 'menu-drawer';
+    if (o) o.className = '';
+    if (b) b.textContent = '2630';
+  } else {
+    d.className = 'menu-drawer open';
+    if (o) o.className = 'open';
+    if (b) b.textContent = '2715';
+  }
+}
+function closeMenu() {
+  var d = document.getElementById('menuDrawer');
+  var o = document.getElementById('menuOverlay');
+  var b = document.getElementById('menuBtn');
+  if (d) d.className = 'menu-drawer';
+  if (o) o.className = '';
+  if (b) b.textContent = '2630';
+}
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', function(e) {
+  var k = e.key || e.keyCode;
+  if (k === 'ArrowRight' || k === 39 || k === ' ' || k === 32) { e.preventDefault(); go(1); }
+  if (k === 'ArrowLeft'  || k === 37) { e.preventDefault(); go(-1); }
+  if (k === 'Escape'     || k === 27) closeMenu();
+});
+
+/* ── TOUCH SWIPE ── */
+var touchStartX = 0;
+var touchStartY = 0;
+var isSwiping   = false;
+var vpEl = document.getElementById('slidesVP');
+if (vpEl) {
+  vpEl.addEventListener('touchstart', function(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = false;
+  }, {passive: true});
+
+  vpEl.addEventListener('touchmove', function(e) {
+    if (!e.touches || !e.touches[0]) return;
+    var dx = e.touches[0].clientX - touchStartX;
+    var dy = e.touches[0].clientY - touchStartY;
+    /* Only prevent default for clear horizontal swipes */
+    if (!isSwiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) {
+      isSwiping = true;
+    }
+    if (isSwiping) {
+      try { e.preventDefault(); } catch(err) {}
+    }
+  }, {passive: false});
+
+  vpEl.addEventListener('touchend', function(e) {
+    if (!e.changedTouches || !e.changedTouches[0]) return;
+    var dx = touchStartX - e.changedTouches[0].clientX;
+    var dy = touchStartY - e.changedTouches[0].clientY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 44) {
+      go(dx > 0 ? 1 : -1);
+    }
+    isSwiping = false;
+  }, {passive: true});
+}
+
+/* ── RESIZE + ORIENTATION ── */
+window.addEventListener('resize', function() {
+  setVH();
+  /* Reapply track position */
+  var track = document.getElementById('track-' + lang);
+  if (track) {
+    track.style.webkitTransition = 'none';
+    track.style.transition = 'none';
+    track.style.webkitTransform = 'translateX(-' + (cur * 100) + '%)';
+    track.style.transform       = 'translateX(-' + (cur * 100) + '%)';
+    setTimeout(function() {
+      if (track) {
+        track.style.webkitTransition = '';
+        track.style.transition = '';
+      }
+    }, 100);
+  }
+});
+
+window.addEventListener('orientationchange', function() {
+  /* orientationchange fires before innerHeight updates — delay setVH */
+  setTimeout(setVH, 200);
+  setTimeout(setVH, 500);
+});
+
+/* visualViewport covers iOS Safari bottom bar show/hide */
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', function() {
+    setVH();
+  });
+  window.visualViewport.addEventListener('scroll', function() {
+    setVH();
+  });
+}
+
+/* ── HINT FADE ── */
+setTimeout(function() {
+  var h = document.getElementById('swipeHint');
+  if (h) h.style.opacity = '0';
+}, 5000);
+
+/* ══════════════════════════════
+   INIT — order matters on iOS:
+   1. setVH immediately (DOM ready)
+   2. update nav state
+   3. setVH again on DOMContentLoaded
+   4. setVH again on load (images done)
+   5. setVH again after 600ms (iOS slow paint)
+══════════════════════════════ */
+setVH();
+update();
+
+document.addEventListener('DOMContentLoaded', function() {
+  setVH();
+  update();
+});
+
+window.addEventListener('load', function() {
+  setVH();
+  update();
+});
+
+setTimeout(setVH, 300);
+setTimeout(setVH, 600);
+setTimeout(setVH, 1200); /* Last resort for very old/slow iPhones */
+</script>
+</body>
+</html>
